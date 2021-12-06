@@ -23,8 +23,7 @@ let binaryToInteger (binary:bool seq) =
 
 module Part1 =
     type State =
-        {GammaRate:int; EpsilonRate:int}
-        override this.ToString() = $"{this.GammaRate * this.EpsilonRate}"
+        {}
     
     let input =
         let matrix =
@@ -39,26 +38,20 @@ module Part1 =
         Seq.init matrix.[0].Length (fun col -> matrix |> Seq.map (fun row -> row.[col]))
         |> Seq.map (Seq.countBy id)
 
-    let state =
-        {
-            GammaRate =
-                input
-                |> Seq.map (Seq.maxBy snd >> fst)
-                |> binaryToInteger
-            EpsilonRate =
-                input
-                |> Seq.map (Seq.minBy snd >> fst)
-                |> binaryToInteger
-        }
+    let GammaRate =
+        input
+        |> Seq.map (Seq.maxBy snd >> fst)
+        |> binaryToInteger
 
-    state
+    let EpsilonRate =
+        input
+        |> Seq.map (Seq.minBy snd >> fst)
+        |> binaryToInteger
+
+    (GammaRate * EpsilonRate)
     |> printfn "Part 1 = %O"
 
 module Part2 =
-    type State =
-        {OxigenGeneratorRating:int; Co2ScrubberRating:int}
-        override this.ToString() = $"{this.OxigenGeneratorRating * this.Co2ScrubberRating}"
-    
     let input =
         input
         |> Seq.map (fun x ->
@@ -78,18 +71,15 @@ module Part2 =
             | xs -> loop (index + 1) xs
         loop 0 input
 
-    let state =
-        {
-            OxigenGeneratorRating =
-                input
-                |> find (fun zeros ones -> if ones.Length >= zeros.Length then ones else zeros)
-                |> binaryToInteger
+    let OxigenGeneratorRating =
+        input
+        |> find (fun zeros ones -> if ones.Length >= zeros.Length then ones else zeros)
+        |> binaryToInteger
 
-            Co2ScrubberRating =
-                input
-                |> find (fun zeros ones -> if zeros.Length <= ones.Length then zeros else ones)
-                |> binaryToInteger
-        }
+    let Co2ScrubberRating =
+        input
+        |> find (fun zeros ones -> if zeros.Length <= ones.Length then zeros else ones)
+        |> binaryToInteger
     
-    state
+    (OxigenGeneratorRating * Co2ScrubberRating)
     |> printfn "Part 2 = %O"

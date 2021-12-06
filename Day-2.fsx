@@ -14,7 +14,6 @@ forward 2
 module Part1 =
     type State =
         {Horizontal:int; Depth:int}
-        override this.ToString() = $"{this.Horizontal * this.Depth}"
         static member Init = {Horizontal = 0; Depth = 0}
 
     let (|Command|_|) (command:string) (input:string) =
@@ -34,13 +33,12 @@ module Part1 =
         input
         |> Seq.fold updateState State.Init
     
-    state
+    (state.Horizontal * state.Depth)
     |> printfn "Part 1 = %O"    
 
 module Part2 =
     type State =
         {Horizontal:int; Depth:int; Aim:int}
-        override this.ToString() = $"{this.Horizontal * this.Depth}"
         static member Init = {Horizontal = 0; Depth = 0; Aim = 0}
 
     let (|Command|_|) (command:string) (input:string) =
@@ -64,5 +62,5 @@ module Part2 =
         input
         |> Seq.fold updateState State.Init
 
-    state
+    (state.Horizontal * state.Depth)
     |> printfn "Part 2 = %O"
