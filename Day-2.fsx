@@ -11,16 +11,16 @@ down 8
 forward 2
 """
 
+let (|Command|_|) (command:string) (input:string) =
+    if input.StartsWith(command) then
+        input.Substring(command.Length + 1) |> int |> Some
+    else
+        None
+
 module Part1 =
     type State =
         {Horizontal:int; Depth:int}
         static member Init = {Horizontal = 0; Depth = 0}
-
-    let (|Command|_|) (command:string) (input:string) =
-        if input.StartsWith(command) then
-            input.Substring(command.Length + 1) |> int |> Some
-        else
-            None
 
     let updateState (state:State) =
         function
@@ -40,12 +40,6 @@ module Part2 =
     type State =
         {Horizontal:int; Depth:int; Aim:int}
         static member Init = {Horizontal = 0; Depth = 0; Aim = 0}
-
-    let (|Command|_|) (command:string) (input:string) =
-        if input.StartsWith(command) then
-            input.Substring(command.Length + 1) |> int |> Some
-        else
-            None
 
     let updateState (state:State) =
         function
