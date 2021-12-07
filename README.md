@@ -1,5 +1,5 @@
 # Advent of Code 2021
-My F# solution of https://adventofcode.com/ 
+My F# solutions of https://adventofcode.com/ 
 
 Start solutions by calling `dotnet fsi Day-X.fsx`.
 
