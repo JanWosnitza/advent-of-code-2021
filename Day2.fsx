@@ -1,8 +1,7 @@
 // https://adventofcode.com/2021/day/2
 #load "Util.fsx"
 
-Util.useTestInput ()
-let input = Util.getInput "https://adventofcode.com/2021/day/2/input" """
+let adventDay = Util.adventDay 2 """
 forward 5
 down 5
 forward 8
@@ -17,6 +16,17 @@ let (|Command|_|) (command:string) (input:string) =
     else
         None
 
+type Command = Forward | Down | Up
+
+let commands =
+    adventDay.RawInput
+    |> Seq.map (function
+        | Command "forward" x -> Forward, x
+        | Command "down" x -> Down, x
+        | Command "up" x -> Up, x
+        | input -> failwith $"Unexpected input {input}"
+    )
+
 module Part1 =
     type State =
         {Horizontal:int; Depth:int}
@@ -24,17 +34,13 @@ module Part1 =
 
     let updateState (state:State) =
         function
-        | Command "forward" x -> {state with Horizontal = state.Horizontal + x}
-        | Command "down" x -> {state with Depth = state.Depth + x}
-        | Command "up" x -> {state with Depth = state.Depth - x}
-        | input -> failwith $"Unexpected input {input}"
+        | Forward, x -> {state with Horizontal = state.Horizontal + x}
+        | Down, x -> {state with Depth = state.Depth + x}
+        | Up, x -> {state with Depth = state.Depth - x}
 
     let state =
-        input
+        commands
         |> Seq.fold updateState State.Init
-    
-    (state.Horizontal * state.Depth)
-    |> printfn "Part 1 = %O"    
 
 module Part2 =
     type State =
@@ -43,18 +49,19 @@ module Part2 =
 
     let updateState (state:State) =
         function
-        | Command "forward" x ->
+        | Forward, x ->
             {state with
                 Horizontal = state.Horizontal + x
                 Depth = state.Depth + state.Aim * x
             }
-        | Command "down" x -> {state with Aim = state.Aim + x}
-        | Command "up" x -> {state with Aim = state.Aim - x}
-        | input -> failwith $"Unexpected input {input}"
+        | Down, x -> {state with Aim = state.Aim + x}
+        | Up, x -> {state with Aim = state.Aim - x}
 
     let state =
-        input
+        commands
         |> Seq.fold updateState State.Init
 
-    (state.Horizontal * state.Depth)
-    |> printfn "Part 2 = %O"
+adventDay.Answer(
+    part1 = Part1.state.Horizontal * Part1.state.Depth,
+    part2 = Part2.state.Horizontal * Part2.state.Depth
+)
