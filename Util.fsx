@@ -5,6 +5,16 @@ let stringTrim (x:string) = x.Trim()
 let stringSplit (splits:string seq) (x:string) =
     x.Trim().Split(Array.ofSeq splits, StringSplitOptions.None)
 
+let memoize () =
+    let cache = System.Collections.Generic.Dictionary<_,_>()
+    fun (f) (x) ->
+    match cache.TryGetValue(x) with
+    | true, count -> count
+    | _ ->
+        let ret = f x
+        cache.Add(x, ret)
+        ret
+
 let private tryGetSession () =
     let lastArg = fsi.CommandLineArgs |> Array.last
     if lastArg.Length <> 96 || lastArg.EndsWith(".fsx", StringComparison.InvariantCultureIgnoreCase)

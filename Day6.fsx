@@ -10,14 +10,16 @@ let fishes =
     |> Util.stringSplit [","]
     |> Array.map int
 
-let fishLife (days) (fish) =
+let fishLife =
+    let rec mem = Util.memoize ()
     let rec recurse (daysLeft) =
         if daysLeft <= 0 then
             1L
         else
-            recurse (daysLeft - 7) + recurse (daysLeft - 9)
+            mem recurse (daysLeft - 7) + mem recurse (daysLeft - 9)
 
-    recurse (days - fish)
+    fun (days) (fish) ->
+    mem recurse (days - fish)
 
 module Part1 =
     let count =
