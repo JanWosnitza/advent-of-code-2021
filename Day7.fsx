@@ -11,31 +11,35 @@ let hpositions =
     |> Array.map int
     |> Array.sort
 
-module Part1 =
-    let bestPosition = hpositions.[(hpositions.Length + 1) / 2]
+let meanPosition = hpositions.[(hpositions.Length + 1) / 2]
 
+module Part1 =
     let fuel =
         hpositions
-        |> Array.sumBy ((-) bestPosition >> abs)
+        |> Array.sumBy ((-) meanPosition >> abs)
 
 module Part2 =
     let averagePosition =
         hpositions
         |> Seq.averageBy float
+        |> round
+        |> int
+
+    let getFuel (position) =
+        hpositions
+        |> Array.sumBy (fun p ->
+            let n = abs (p - position)
+            (n * n + n) / 2 // == n * (n + 1) / 2
+        )
 
     let fuel =
-        let get (position) =
-            let position = int position
-            hpositions
-            |> Array.sumBy (fun p ->
-                let n = abs (p - position)
-                (n * n + n) / 2 // == n * (n + 1) / 2
-            )
-
-        (
-            averagePosition |> floor |> get,
-            averagePosition |> ceil |> get
-        ) ||> min
+        // With fuel consumtption "n * n" average would be the best position but the "n" term skews it of a little.
+        let direction = sign (meanPosition - averagePosition)
+        Seq.initInfinite (fun x -> averagePosition + direction * x)
+        |> Seq.map getFuel
+        |> Seq.pairwise
+        |> Seq.find (fun (a, b) -> a < b)
+        |> fst
 
 day.Answer(
     part1 = Part1.fuel,
