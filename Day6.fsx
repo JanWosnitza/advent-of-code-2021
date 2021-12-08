@@ -5,7 +5,7 @@ let day = Util.adventDay 6 """
 3,4,3,1,2
 """
 
-let fishes =
+let allFish =
     day.RawInput.[0]
     |> Util.stringSplit [","]
     |> Array.map int
@@ -23,12 +23,12 @@ let fishLife =
 
 module Part1 =
     let count =
-        fishes
+        allFish
         |> Seq.sumBy (fishLife 80)
 
 module Part2 =
     let count =
-        fishes
+        allFish
         |> Seq.countBy id
         |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
 
