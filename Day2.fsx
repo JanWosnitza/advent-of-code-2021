@@ -1,7 +1,14 @@
 // https://adventofcode.com/2021/day/2
-#load "Util.fsx"
+#load "Advent.fsx"
+open Advent
 
-let adventDay = Util.adventDay 2 """
+type Command = Forward | Down | Up
+
+type State1 = {Horizontal:int; Depth:int}
+
+type State2 = {Horizontal:int; Depth:int; Aim:int}
+
+solution 2 """
 forward 5
 down 5
 forward 8
@@ -9,6 +16,7 @@ up 3
 down 8
 forward 2
 """
+<| fun input ->
 
 let (|Command|_|) (command:string) (input:string) =
     if input.StartsWith(command) then
@@ -16,10 +24,8 @@ let (|Command|_|) (command:string) (input:string) =
     else
         None
 
-type Command = Forward | Down | Up
-
 let commands =
-    adventDay.RawInput
+    input
     |> Seq.map (function
         | Command "forward" x -> Forward, x
         | Command "down" x -> Down, x
@@ -27,41 +33,33 @@ let commands =
         | input -> failwith $"Unexpected input {input}"
     )
 
-module Part1 =
-    type State =
-        {Horizontal:int; Depth:int}
-        static member Init = {Horizontal = 0; Depth = 0}
+{
+    Part1 = 150, fun () ->
+        let state =
+            ({Horizontal = 0; Depth = 0}, commands)
+            ||> Seq.fold (fun state ->
+                function
+                | Forward, x -> {state with Horizontal = state.Horizontal + x}
+                | Down, x -> {state with Depth = state.Depth + x}
+                | Up, x -> {state with Depth = state.Depth - x}
+            )
 
-    let updateState (state:State) =
-        function
-        | Forward, x -> {state with Horizontal = state.Horizontal + x}
-        | Down, x -> {state with Depth = state.Depth + x}
-        | Up, x -> {state with Depth = state.Depth - x}
 
-    let state =
-        commands
-        |> Seq.fold updateState State.Init
+        state.Horizontal * state.Depth
 
-module Part2 =
-    type State =
-        {Horizontal:int; Depth:int; Aim:int}
-        static member Init = {Horizontal = 0; Depth = 0; Aim = 0}
-
-    let updateState (state:State) =
-        function
-        | Forward, x ->
-            {state with
-                Horizontal = state.Horizontal + x
-                Depth = state.Depth + state.Aim * x
-            }
-        | Down, x -> {state with Aim = state.Aim + x}
-        | Up, x -> {state with Aim = state.Aim - x}
-
-    let state =
-        commands
-        |> Seq.fold updateState State.Init
-
-adventDay.Answer(
-    part1 = Part1.state.Horizontal * Part1.state.Depth,
-    part2 = Part2.state.Horizontal * Part2.state.Depth
-)
+    Part2 = 900, fun () ->
+        let state =
+            ({Horizontal = 0; Depth = 0; Aim = 0}, commands)
+            ||> Seq.fold (fun state ->
+                function
+                | Forward, x ->
+                    {state with
+                        Horizontal = state.Horizontal + x
+                        Depth = state.Depth + state.Aim * x
+                    }
+                | Down, x -> {state with Aim = state.Aim + x}
+                | Up, x -> {state with Aim = state.Aim - x}
+            )
+        
+        state.Horizontal * state.Depth
+}

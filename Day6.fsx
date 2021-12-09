@@ -1,12 +1,14 @@
 // https://adventofcode.com/2021/day/6
-#load "Util.fsx"
+#load "Advent.fsx"
+open Advent
 
-let day = Util.adventDay 6 """
+solution 6 """
 3,4,3,1,2
 """
+<| fun input ->
 
 let allFish =
-    day.RawInput.[0]
+    input.[0]
     |> Util.stringSplit [","]
     |> Array.map int
 
@@ -21,18 +23,13 @@ let fishLife =
     fun (days) (fish) ->
     mem recurse (days - fish)
 
-module Part1 =
-    let count =
+{
+    Part1 = 5934L, fun () ->
         allFish
         |> Seq.sumBy (fishLife 80)
 
-module Part2 =
-    let count =
+    Part2 = 26984457539L, fun () ->
         allFish
         |> Seq.countBy id
         |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
-
-day.Answer(
-    part1 = Part1.count,
-    part2 = Part2.count
-)
+}

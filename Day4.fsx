@@ -1,7 +1,13 @@
-//https://adventofcode.com/2021/day/4
-#load "Util.fsx"
+// https://adventofcode.com/2021/day/4
+#load "Advent.fsx"
+open Advent
 
-let adventDay = Util.adventDay 4 """
+type DrawList = DrawList of int list
+
+type Board = Board of int[][]
+
+
+solution 4 """
 7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
@@ -22,12 +28,10 @@ let adventDay = Util.adventDay 4 """
 22 11 13  6  5
  2  0 12  3  7
 """
-
-type DrawList =
-    | DrawList of int list
+<| fun input ->
 
 let rounds =
-    adventDay.RawInput
+    input
     |> Array.head
     |> Util.stringSplit [","]
     |> Seq.map int
@@ -36,10 +40,8 @@ let rounds =
     |> List.unfold (function [] -> None | drawList -> Some (DrawList drawList, List.tail drawList))
     |> List.rev
 
-type Board = Board of int[][]
-
 let boards =
-    adventDay.RawInput
+    input
     |> Seq.tail
     |> Seq.chunkBySize 6
     |> Seq.map (fun x ->
@@ -67,12 +69,6 @@ let boardsWithWinRound =
         (round, board)
     )
 
-module Part1 =
-    let roundAndBoard = boardsWithWinRound |> List.minBy fst
-
-module Part2 =
-    let roundAndBoard = boardsWithWinRound |> List.maxBy fst
-
 let getScore (round, Board board) =
     let (DrawList drawList) = rounds.[round]
     let lastDrawnNumber = List.head drawList
@@ -85,7 +81,14 @@ let getScore (round, Board board) =
 
     (lastDrawnNumber * sum)
 
-adventDay.Answer(
-    part1 = getScore Part1.roundAndBoard,
-    part2 = getScore Part2.roundAndBoard
-)
+{
+    Part1 = 4512, fun () ->
+        boardsWithWinRound
+        |> List.minBy fst
+        |> getScore
+
+    Part2 = 1924, fun () ->
+        boardsWithWinRound
+        |> List.maxBy fst
+        |> getScore
+}

@@ -1,18 +1,18 @@
 // https://adventofcode.com/2021/day/9
-#load "Util.fsx"
+#load "Advent.fsx"
+open Advent
 
-open System
-
-let day = Util.adventDay 9 """
+solution 9 """
 2199943210
 3987894921
 9856789892
 8767896789
 9899965678
 """
+<| fun input ->
 
 let heightmap =
-    day.RawInput
+    input
     |> Seq.mapi (fun x row ->
         row
         |> Seq.mapi (fun y c -> ((x, y), int c - int '0'))
@@ -27,8 +27,8 @@ let getNeighbours (x, y) =
         x, y - 1; x, y + 1
     ]
 
-module Part1 =
-    let risks =
+{
+    Part1 = 15, fun () ->
         heightmap
         |> Map.toSeq
         |> Seq.filter (fun (position, height) ->
@@ -38,18 +38,18 @@ module Part1 =
         )
         |> Seq.map (snd >> (+)1)
         |> Seq.toList
+        |> Seq.sum
 
-module Part2 =
-    let rec findNeighboursRecursive (validPositions) (visited) (position) =
-        if Set.contains position visited then
-            visited
-        elif not <| Set.contains position validPositions then
-            visited
-        else
-            (Set.add position visited, getNeighbours position)
-            ||> Seq.fold (findNeighboursRecursive validPositions)
+    Part2 = 1134, fun () ->
+        let rec findNeighboursRecursive (validPositions) (visited) (position) =
+            if Set.contains position visited then
+                visited
+            elif not <| Set.contains position validPositions then
+                visited
+            else
+                (Set.add position visited, getNeighbours position)
+                ||> Seq.fold (findNeighboursRecursive validPositions)
 
-    let basinsSizes =
         heightmap
         |> Map.toSeq
         |> Seq.choose (fun (position, height) -> if height < 9 then Some position else None)
@@ -61,8 +61,7 @@ module Part2 =
             Some (Set.count set, Set.difference positions set)
         )
         |> List.sortDescending
-
-day.Answer(
-    part1 = (Part1.risks |> Seq.sum),
-    part2 = (Part2.basinsSizes |> List.sortDescending |> Seq.take 3 |> Seq.reduce (*))
-)
+        |> List.sortDescending
+        |> Seq.take 3
+        |> Seq.reduce (*)
+}
