@@ -1,4 +1,4 @@
-// https://adventofcode.com/2021/day/7
+// https://adventofcode.com/2021/day/8
 #load "Util.fsx"
 
 open System
