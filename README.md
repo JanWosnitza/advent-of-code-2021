@@ -11,4 +11,4 @@ Put a session-key in a file in sessions folder and call:
 Or simply use the session-key like this:
 ```dotnet fsi Day-X.fsx SESSION```
 
-Session has to be taken from web-site cookies.
+Session-key is retrieved from web-site's cookies.
