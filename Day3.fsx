@@ -6,20 +6,7 @@ let binaryToInteger (binary:bool seq) =
     (0, binary)
     ||> Seq.fold (fun value -> function true -> value * 2 + 1 | false -> value * 2)
 
-"""
-00100
-11110
-10110
-10111
-10101
-01111
-00111
-11100
-10000
-11001
-00010
-01010
-""" |> adventDay 3 {
+Day 3 {
 Parse =
     fun input ->
     {|
@@ -76,3 +63,18 @@ Part2 =
 
     OxigenGeneratorRating * Co2ScrubberRating
 }
+
+<| """
+00100
+11110
+10110
+10111
+10101
+01111
+00111
+11100
+10000
+11001
+00010
+01010
+"""

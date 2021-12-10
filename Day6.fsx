@@ -13,9 +13,7 @@ let fishLife =
     fun (days) (fish) ->
     mem recurse (days - fish)
 
-"""
-3,4,3,1,2
-""" |> adventDay 6 {
+Day 6 {
 Parse =
     fun input ->
 
@@ -37,3 +35,7 @@ Part2 =
     |> Seq.countBy id
     |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
 }
+
+<| """
+3,4,3,1,2
+"""

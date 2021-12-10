@@ -2,9 +2,7 @@
 #load "Advent.fsx"
 open Advent
 
-"""
-16,1,2,0,4,2,7,1,2,14
-""" |> adventDay 7 {
+Day 7 {
 Parse =
     fun input ->
     let hPositions =
@@ -45,3 +43,7 @@ Part2 =
     |> Seq.find (fun (a, b) -> a < b)
     |> fst
 }
+
+<| """
+16,1,2,0,4,2,7,1,2,14
+"""

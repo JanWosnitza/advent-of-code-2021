@@ -10,34 +10,19 @@ type TestResult =
     | InvalidClose of BracketType
     | MissingCloses of BracketType list
 
-"""
-[({(<(())[]>[[{[]{<()<>>
-[(()[<>])]({[<{<<[]>>(
-{([(<{}[<>[]}>{[]{[(<()>
-(((({<>}<{<{<>}{[]{[]{}
-[[<[([]))<([[{}[[()]]]
-[{[{({}]{}}([{[{{{}}([]
-{<[[]]>}<{[{[{[]{()[[[]
-[<(<(<(<{}))><([]([]()
-<{([([[(<>()){}]>(<<{{
-<{([{{}}[<[[[<>{}]]]>[]]
-""" |> adventDay 10 {
+Day 10 {
 Parse =
     fun input ->
-
-    let lines =
-        input
-        |> Seq.map (fun line ->
-            line
-            |> Seq.map (function
-                | '(' -> Open,  Round | ')' -> Close,  Round
-                | '[' -> Open, Square | ']' -> Close, Square
-                | '{' -> Open,  Curly | '}' -> Close,  Curly
-                | '<' -> Open,  Angle | '>' -> Close,  Angle
-                | c -> failwith $"Unexptected character {c}"
-            )
-            |> Seq.toList
+    let convert line =
+        line
+        |> Seq.map (function
+            | '(' -> Open,  Round | ')' -> Close,  Round
+            | '[' -> Open, Square | ']' -> Close, Square
+            | '{' -> Open,  Curly | '}' -> Close,  Curly
+            | '<' -> Open,  Angle | '>' -> Close,  Angle
+            | c -> failwith $"Unexptected character {c}"
         )
+        |> Seq.toList
 
     let rec test (expectedClose) (rest) =
         match expectedClose, rest with
@@ -54,8 +39,8 @@ Parse =
 
     {|
         TestResults =
-            lines
-            |> Seq.map (test [])
+            input
+            |> Seq.map (convert >> test [])
             |> Seq.toList
     |}
 
@@ -92,3 +77,16 @@ Part2 =
     
     scores.[scores.Length / 2]
 }
+
+<| """
+[({(<(())[]>[[{[]{<()<>>
+[(()[<>])]({[<{<<[]>>(
+{([(<{}[<>[]}>{[]{[(<()>
+(((({<>}<{<{<>}{[]{[]{}
+[[<[([]))<([[{}[[()]]]
+[{[{({}]{}}([{[{{{}}([]
+{<[[]]>}<{[{[{[]{()[[[]
+[<(<(<(<{}))><([]([]()
+<{([([[(<>()){}]>(<<{{
+<{([{{}}[<[[[<>{}]]]>[]]
+"""

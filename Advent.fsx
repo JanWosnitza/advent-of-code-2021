@@ -91,7 +91,7 @@ let private measure (message1:string) (f) (message2:_->string) =
 
     x
 
-let adventDay (day:int) (data:AdventDay<_,_,_>) (testInput:string) =
+let Day (day:int) (data:AdventDay<_,_,_>) (testInput:string) =
     printfn $"Day {day} - https://adventofcode.com/2021/day/{day}"
 
     let inputType, input = getInput day testInput

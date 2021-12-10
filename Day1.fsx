@@ -2,19 +2,7 @@
 #load "Advent.fsx"
 open Advent
 
-"""
-199
-200
-208
-210
-200
-207
-240
-269
-260
-263
-"""
-|> adventDay 1 {
+Day 1 {
 Parse = fun input ->
     {|
         Depths =
@@ -34,3 +22,16 @@ Part2 =  5, fun input ->
     |> Seq.pairwise
     |> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
 }
+
+<| """
+199
+200
+208
+210
+200
+207
+240
+269
+260
+263
+"""

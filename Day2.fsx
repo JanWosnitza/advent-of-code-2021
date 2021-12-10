@@ -8,14 +8,7 @@ type State1 = {Horizontal:int; Depth:int}
 
 type State2 = {Horizontal:int; Depth:int; Aim:int}
 
-"""
-forward 5
-down 5
-forward 8
-up 3
-down 8
-forward 2
-""" |> adventDay 2 {
+Day 2 {
 Parse =
     fun input ->
     let (|Command|_|) (command:string) (input:string) =
@@ -65,3 +58,12 @@ Part2 =
     
     state.Horizontal * state.Depth
 }
+
+<| """
+forward 5
+down 5
+forward 8
+up 3
+down 8
+forward 2
+"""
