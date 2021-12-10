@@ -2,43 +2,46 @@
 #load "Advent.fsx"
 open Advent
 
-solution 7 """
-16,1,2,0,4,2,7,1,2,14
 """
-<| fun input ->
+16,1,2,0,4,2,7,1,2,14
+""" |> adventDay 7 {
+Parse =
+    fun input ->
+    let hPositions =
+        input.[0]
+        |> Util.stringSplit [","]
+        |> Array.map int
+        |> Array.sort
 
-let hpositions =
-    input.[0]
-    |> Util.stringSplit [","]
-    |> Array.map int
-    |> Array.sort
+    {|
+        HPositions = hPositions
+        MedianPosition = hPositions.[hPositions.Length / 2]
+    |}
 
-let medianPosition = hpositions.[(hpositions.Length + 1) / 2]
+Part1 =
+    37, fun input ->
+    input.HPositions
+    |> Array.sumBy ((-) input.MedianPosition >> abs)
 
-{
-    Part1 = 37, fun () ->
-        hpositions
-        |> Array.sumBy ((-) medianPosition >> abs)
-    
-    Part2 = 168, fun () ->
-        let averagePosition =
-            hpositions
-            |> Seq.averageBy float
-            |> round
-            |> int
+Part2 =
+    168, fun input ->
+    let averagePosition =
+        input.HPositions
+        |> Seq.averageBy float
+        |> round
+        |> int
 
-        let getFuel (position) =
-            hpositions
-            |> Array.sumBy (fun p ->
-                let n = abs (p - position)
-                (n * n + n) / 2 // == n * (n + 1) / 2
-            )
-
-        // With fuel consumtption "n * n" average would be the best position but the "n" term skews it of a little.
-        let direction = sign (medianPosition - averagePosition)
-        Seq.initInfinite (fun x -> averagePosition + direction * x)
-        |> Seq.map getFuel
-        |> Seq.pairwise
-        |> Seq.find (fun (a, b) -> a < b)
-        |> fst
+    // With fuel consumtption "n * n" average would be the best position but the "n" term skews it of a little.
+    let direction = sign (input.MedianPosition - averagePosition)
+    Seq.initInfinite (fun x -> averagePosition + direction * x)
+    |> Seq.map (fun (position) ->
+        input.HPositions
+        |> Array.sumBy (fun p ->
+            let n = abs (p - position)
+            (n * n + n) / 2 // == n * (n + 1) / 2
+        )
+    )
+    |> Seq.pairwise
+    |> Seq.find (fun (a, b) -> a < b)
+    |> fst
 }

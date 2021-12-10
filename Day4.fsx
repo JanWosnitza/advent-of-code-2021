@@ -6,8 +6,19 @@ type DrawList = DrawList of int list
 
 type Board = Board of int[][]
 
+let getScore (round) (Board board) =
+    let (DrawList drawList) = round
+    let lastDrawnNumber = List.head drawList
 
-solution 4 """
+    let sum =
+        board
+        |> Seq.collect id
+        |> Seq.filter (fun x -> List.contains x drawList |> not)
+        |> Seq.sum
+
+    (lastDrawnNumber * sum)
+    
+"""
 7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
@@ -27,68 +38,59 @@ solution 4 """
 18  8 23 26 20
 22 11 13  6  5
  2  0 12  3  7
-"""
-<| fun input ->
+""" |> adventDay 4 {
+Parse =
+    fun input ->
+    let rounds =
+        input
+        |> Array.head
+        |> Util.stringSplit [","]
+        |> Seq.map int
+        |> Seq.toList
+        |> List.rev
+        |> List.unfold (function [] -> None | drawList -> Some (DrawList drawList, List.tail drawList))
+        |> List.rev
 
-let rounds =
-    input
-    |> Array.head
-    |> Util.stringSplit [","]
-    |> Seq.map int
-    |> Seq.toList
-    |> List.rev
-    |> List.unfold (function [] -> None | drawList -> Some (DrawList drawList, List.tail drawList))
-    |> List.rev
-
-let boards =
-    input
-    |> Seq.tail
-    |> Seq.chunkBySize 6
-    |> Seq.map (fun x ->
-        x
-        |> Seq.tail // skip empty row
-        |> Seq.map (
-            Util.stringSplit ["  "; " "]
-            >> Seq.map (Util.stringTrim >> int)
-            >> Seq.toArray
+    let boards =
+        input
+        |> Seq.tail
+        |> Seq.chunkBySize 6
+        |> Seq.map (fun x ->
+            x
+            |> Seq.tail // skip empty row
+            |> Seq.map (
+                Util.stringSplit ["  "; " "]
+                >> Seq.map (Util.stringTrim >> int)
+                >> Seq.toArray
+            )
+            |> Seq.toArray
+            |> Board
         )
-        |> Seq.toArray
-        |> Board
-    )
-    |> Seq.toList
+        |> Seq.toList
 
-let isWin (Board board) (DrawList drawList) =
-    let test (get) = [0 .. 4] |> List.exists (fun i -> [0 .. 4] |> List.forall (fun j -> drawList |> List.contains (get i j)))
-    test (fun i j -> board.[i].[j])
-    || test (fun i j -> board.[j].[i])
+    let isWin (Board board) (DrawList drawList) =
+        let test (get) = [0 .. 4] |> List.exists (fun i -> [0 .. 4] |> List.forall (fun j -> drawList |> List.contains (get i j)))
+        test (fun i j -> board.[i].[j])
+        || test (fun i j -> board.[j].[i])
 
-let boardsWithWinRound =
-    boards
-    |> List.map (fun board ->
-        let round = rounds |> List.findIndex (isWin board)
-        (round, board)
-    )
+    {|
+        BoardsWithWinRound =
+            boards
+            |> List.map (fun board ->
+                let round = rounds |> List.findIndex (isWin board)
+                (round, (rounds.[round], board))
+            )
+    |}
 
-let getScore (round, Board board) =
-    let (DrawList drawList) = rounds.[round]
-    let lastDrawnNumber = List.head drawList
+Part1 = 4512, fun input ->
+    input.BoardsWithWinRound
+    |> List.minBy fst
+    |> snd
+    ||> getScore
 
-    let sum =
-        board
-        |> Seq.collect id
-        |> Seq.filter (fun x -> List.contains x drawList |> not)
-        |> Seq.sum
-
-    (lastDrawnNumber * sum)
-
-{
-    Part1 = 4512, fun () ->
-        boardsWithWinRound
-        |> List.minBy fst
-        |> getScore
-
-    Part2 = 1924, fun () ->
-        boardsWithWinRound
-        |> List.maxBy fst
-        |> getScore
+Part2 = 1924, fun input ->
+    input.BoardsWithWinRound
+    |> List.maxBy fst
+    |> snd
+    ||> getScore
 }

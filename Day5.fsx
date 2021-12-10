@@ -7,32 +7,6 @@ type Regex = FSharp.Text.RegexProvider.Regex< @"^(?<X1>\d+),(?<Y1>\d+) -> (?<X2>
 
 type Vent = {X1 : int; Y1 : int; X2 : int; Y2 : int}
 
-solution 5 """
-0,9 -> 5,9
-8,0 -> 0,8
-9,4 -> 3,4
-2,2 -> 2,1
-7,0 -> 7,4
-6,4 -> 2,0
-0,9 -> 2,9
-3,4 -> 1,4
-0,0 -> 8,8
-5,5 -> 8,2
-"""
-<| fun input ->
-
-let vents =
-    input
-    |> Array.map (fun x ->
-        let tm = Regex().TypedMatch(x)
-        {
-            X1 = tm.X1.Value |> int
-            Y1 = tm.Y1.Value |> int
-            X2 = tm.X2.Value |> int
-            Y2 = tm.Y2.Value |> int
-        }
-    )
-
 let getPositions (vent:Vent) =
     let signX = sign (vent.X2 - vent.X1)
     let signY = sign (vent.Y2 - vent.Y1)
@@ -46,13 +20,40 @@ let overlaps (vents) =
     |> Seq.filter (fun (_, count) -> count >= 2)
     |> Seq.length
 
-{
-    Part1 = 5, fun () ->
-        vents
-        |> Seq.filter (fun vent -> vent.X1 = vent.X2 || vent.Y1 = vent.Y2)
-        |> overlaps
+"""
+0,9 -> 5,9
+8,0 -> 0,8
+9,4 -> 3,4
+2,2 -> 2,1
+7,0 -> 7,4
+6,4 -> 2,0
+0,9 -> 2,9
+3,4 -> 1,4
+0,0 -> 8,8
+5,5 -> 8,2
+""" |> adventDay 5 {
+Parse =
+    fun input ->
+    {|
+        Vents =
+            input
+            |> Array.map (fun x ->
+                let tm = Regex().TypedMatch(x)
+                {
+                    X1 = tm.X1.Value |> int
+                    Y1 = tm.Y1.Value |> int
+                    X2 = tm.X2.Value |> int
+                    Y2 = tm.Y2.Value |> int
+                }
+            )
+    |}
 
-    Part2 = 12, fun () ->
-        vents
-        |> overlaps
+Part1 = 5, fun input ->
+    input.Vents
+    |> Seq.filter (fun vent -> vent.X1 = vent.X2 || vent.Y1 = vent.Y2)
+    |> overlaps
+
+Part2 = 12, fun input ->
+    input.Vents
+    |> overlaps
 }

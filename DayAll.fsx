@@ -14,6 +14,7 @@ printfn ""
 #load "Day7.fsx"
 #load "Day8.fsx"
 #load "Day9.fsx"
+#load "Day10.fsx"
 
 watch.Stop()
 

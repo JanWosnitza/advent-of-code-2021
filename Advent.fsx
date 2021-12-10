@@ -20,20 +20,22 @@ module Util =
 
 open Util
 
+type Session = {Name:string; Key:string}
+
+let private dirSessions = Path.Combine(__SOURCE_DIRECTORY__ , "sessions")
+
 let private session =
     let lastArg = System.Environment.GetCommandLineArgs() |> Array.last
-    let sessionPath = Path.Combine(__SOURCE_DIRECTORY__ , "sessions", lastArg)
+    let sessionPath = Path.Combine(dirSessions, lastArg)
     
     if File.Exists(sessionPath) then
-        IO.File.ReadAllText(sessionPath).Trim()
-        |> Some
+        let key = IO.File.ReadAllText(sessionPath).Trim()
+        Some {Name = lastArg; Key = key}
     elif lastArg.Length = 96 && (not <| lastArg.EndsWith(".fsx", StringComparison.InvariantCultureIgnoreCase)) then
-        Some lastArg
+        Some {Name = lastArg; Key = lastArg}
     else
+        printfn $"No Session => Test Mode"
         None
-
-if Option.isNone session then
-    printfn $"No Session => Test Mode"
 
 type InputType = Test | Real
 
@@ -48,40 +50,36 @@ let private getInput (dayOfAdvent:int) (testInput:string) =
     | None ->
         testInput
         |> prep Test
-    | Some session ->
-        use cl = new Net.Http.HttpClient()
-        cl.DefaultRequestHeaders.Add("cookie", $"session={session}")
-        cl.GetStringAsync($"https://adventofcode.com/2021/day/{dayOfAdvent}/input")
-        |> Async.AwaitTask
-        |> Async.RunSynchronously
+    | Some {Name=sessionName; Key=sessionKey} ->
+        let rawInput =
+            let dirCache = Path.Combine(dirSessions, $"{sessionName}_cache")
+            Directory.CreateDirectory(dirCache) |> ignore
+
+            let cachedPath = Path.Combine(dirCache, $"{dayOfAdvent}.txt")
+            if File.Exists(cachedPath) then
+                File.ReadAllText(cachedPath)
+            else
+                let response =
+                    use cl = new Net.Http.HttpClient()
+                    cl.DefaultRequestHeaders.Add("cookie", $"session={sessionKey}")
+                    cl.GetStringAsync($"https://adventofcode.com/2021/day/{dayOfAdvent}/input")
+                    |> Async.AwaitTask
+                    |> Async.RunSynchronously
+                File.WriteAllText(cachedPath, response)
+                response
+
+        rawInput
         |> prep Real
 
-type Solution<'a> =
-    {
-        Expected : 'a
-        Solve : unit -> 'a
-    }
+type NotImplemented = struct end
+let NotImplemented () = NotImplemented(), fun _ -> NotImplemented()
 
-type ISolutions<'p1, 'p2> =
-    abstract Part1 : 'p1 * (unit -> 'p1)
-    abstract Part2 : ('p2 * (unit -> 'p2)) option
-
-type Solutions1<'p1> =
+type AdventDay<'input, 'answer1, 'answer2> =
     {
-        Part1 : 'p1 * (unit -> 'p1)
+        Parse : string[] -> 'input
+        Part1 : 'answer1 * ('input -> 'answer1)
+        Part2 : ('answer2 * ('input -> 'answer2))
     }
-    interface ISolutions<'p1, unit> with
-        member this.Part1 = this.Part1
-        member this.Part2 = None
-
-type Solutions2<'p1, 'p2> =
-    {
-        Part1 : 'p1 * (unit -> 'p1)
-        Part2 : 'p2 * (unit -> 'p2)
-    }
-    interface ISolutions<'p1, 'p2> with
-        member this.Part1 = this.Part1
-        member this.Part2 = Some this.Part2
 
 let private measure (message1:string) (f) (message2:_->string) =
     printf "%s" message1
@@ -93,33 +91,32 @@ let private measure (message1:string) (f) (message2:_->string) =
 
     x
 
-let solution (dayOfAdvent:int) (testInput:string) (getSolutions:string[]->#ISolutions<_,_>) =
-    printfn $"Day {dayOfAdvent} : https://adventofcode.com/2021/day/{dayOfAdvent}"
+let adventDay (day:int) (data:AdventDay<_,_,_>) (testInput:string) =
+    printfn $"Day {day} - https://adventofcode.com/2021/day/{day}"
 
-    let inputType, input =
+    let inputType, input = getInput day testInput
+
+    let input =
         measure
-            "  Fetching Data:"
-            (fun () -> getInput dayOfAdvent testInput)
-            (fun _ -> "OK")
-    
-    let solutions =
-        measure
-            "  Parsing Input:"
-            (fun () -> getSolutions input)
+            "  Parsing:"
+            (fun () -> data.Parse input)
             (fun _ -> "OK")
 
-    let test (name) (expected, solve) =
-        measure
-            $"  {name}:"
-            solve
-            (fun result ->
-                match inputType with
-                | Test when result = expected -> $"SUCCESS"
-                | Test -> $"FAILED with {result}"
-                | Real -> $"{result}"
-            )
-        |> ignore
+    let test (name) (expected:'answer, solve) =
+        if typeof<'answer> = typeof<NotImplemented> then
+            printfn $"  {name}: NO IMPLEMENTAION"
+        else
+            measure
+                $"  {name}:"
+                (fun () -> solve input)
+                (fun result ->
+                    match inputType with
+                    | Test when result = expected -> $"SUCCESS"
+                    | Test -> $"FAILED with {result}"
+                    | Real -> $"{result}"
+                )
+            |> ignore
 
-    solutions.Part1 |> test "Part 1"
-    solutions.Part2 |> Option.iter (test "Part 2")
+    data.Part1 |> test "Part 1"
+    data.Part2 |> test "Part 2"
     // TODO Post solution to webserver and show result XDDDD

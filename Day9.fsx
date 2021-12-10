@@ -2,55 +2,59 @@
 #load "Advent.fsx"
 open Advent
 
-solution 9 """
-2199943210
-3987894921
-9856789892
-8767896789
-9899965678
-"""
-<| fun input ->
-
-let heightmap =
-    input
-    |> Seq.mapi (fun x row ->
-        row
-        |> Seq.mapi (fun y c -> ((x, y), int c - int '0'))
-        |> Seq.toList
-    )
-    |> Seq.collect id
-    |> Map.ofSeq
-
 let getNeighbours (x, y) =
     [
         x - 1, y; x + 1, y
         x, y - 1; x, y + 1
     ]
 
-{
-    Part1 = 15, fun () ->
-        heightmap
-        |> Map.toSeq
-        |> Seq.filter (fun (position, height) ->
-            getNeighbours position
-            |> Seq.choose (fun position -> Map.tryFind position heightmap)
-            |> Seq.forall (fun neighbourHeight -> height < neighbourHeight)
-        )
-        |> Seq.map (snd >> (+)1)
-        |> Seq.toList
-        |> Seq.sum
+"""
+2199943210
+3987894921
+9856789892
+8767896789
+9899965678
+""" |> adventDay 9 {
+Parse =
+    fun input ->
+    {|
+        Heightmap =
+            input
+            |> Seq.mapi (fun x row ->
+                row
+                |> Seq.mapi (fun y c -> ((x, y), int c - int '0'))
+                |> Seq.toList
+            )
+            |> Seq.collect id
+            |> Map.ofSeq
+    |}
 
-    Part2 = 1134, fun () ->
-        let rec findNeighboursRecursive (validPositions) (visited) (position) =
-            if Set.contains position visited then
-                visited
-            elif not <| Set.contains position validPositions then
-                visited
-            else
-                (Set.add position visited, getNeighbours position)
-                ||> Seq.fold (findNeighboursRecursive validPositions)
+Part1 =
+    15, fun input ->
+    input.Heightmap
+    |> Map.toSeq
+    |> Seq.filter (fun (position, height) ->
+        getNeighbours position
+        |> Seq.choose (fun position -> Map.tryFind position input.Heightmap)
+        |> Seq.forall (fun neighbourHeight -> height < neighbourHeight)
+    )
+    |> Seq.map (snd >> (+)1)
+    |> Seq.toList
+    |> Seq.sum
 
-        heightmap
+Part2 =
+    1134, fun input ->
+    let rec findNeighboursRecursive (validPositions) (visited) (position) =
+        if Set.contains position visited then
+            visited
+        elif not <| Set.contains position validPositions then
+            visited
+        else
+            (Set.add position visited, getNeighbours position)
+            ||> Seq.fold (findNeighboursRecursive validPositions)
+
+    let basins =
+        input.Heightmap
         |> Map.toSeq
         |> Seq.choose (fun (position, height) -> if height < 9 then Some position else None)
         |> Set.ofSeq
@@ -58,10 +62,12 @@ let getNeighbours (x, y) =
             if positions.IsEmpty then None else
             let position = Set.minElement positions
             let set = findNeighboursRecursive positions Set.empty position
-            Some (Set.count set, Set.difference positions set)
+            Some (set, Set.difference positions set)
         )
-        |> List.sortDescending
-        |> List.sortDescending
-        |> Seq.take 3
-        |> Seq.reduce (*)
+
+    basins
+    |> Seq.map Set.count
+    |> Seq.sortDescending
+    |> Seq.take 3
+    |> Seq.reduce (*)
 }

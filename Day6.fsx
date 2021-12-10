@@ -2,16 +2,6 @@
 #load "Advent.fsx"
 open Advent
 
-solution 6 """
-3,4,3,1,2
-"""
-<| fun input ->
-
-let allFish =
-    input.[0]
-    |> Util.stringSplit [","]
-    |> Array.map int
-
 let fishLife =
     let rec mem = Util.memoize ()
     let rec recurse (daysLeft) =
@@ -23,13 +13,27 @@ let fishLife =
     fun (days) (fish) ->
     mem recurse (days - fish)
 
-{
-    Part1 = 5934L, fun () ->
-        allFish
-        |> Seq.sumBy (fishLife 80)
+"""
+3,4,3,1,2
+""" |> adventDay 6 {
+Parse =
+    fun input ->
 
-    Part2 = 26984457539L, fun () ->
-        allFish
-        |> Seq.countBy id
-        |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
+    {|
+        AllFish =
+            input.[0]
+            |> Util.stringSplit [","]
+            |> Array.map int
+    |}
+
+Part1 =
+    5934L, fun input ->
+    input.AllFish
+    |> Seq.sumBy (fishLife 80)
+
+Part2 =
+    26984457539L, fun input ->
+    input.AllFish
+    |> Seq.countBy id
+    |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
 }
