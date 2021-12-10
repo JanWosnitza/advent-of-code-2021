@@ -3,27 +3,29 @@
 open Advent
 
 Day 1 {
-Parse = fun input ->
+Parse =
+    fun input ->
     {|
         Depths =
             input
             |> Seq.map int
     |}
 
-Part1 = 7, fun input ->
+Part1 =
+    7, fun input ->
     input.Depths
     |> Seq.pairwise
     |> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
 
-Part2 =  5, fun input ->
+Part2 =
+    5, fun input ->
     input.Depths
     |> Seq.windowed 3
     |> Seq.map Seq.sum
     |> Seq.pairwise
     |> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
-}
 
-<| """
+TestInput = """
 199
 200
 208
@@ -35,3 +37,4 @@ Part2 =  5, fun input ->
 260
 263
 """
+}

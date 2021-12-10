@@ -62,9 +62,8 @@ Part2 =
         |> binaryToInteger
 
     OxigenGeneratorRating * Co2ScrubberRating
-}
 
-<| """
+TestInput =  """
 00100
 11110
 10110
@@ -78,3 +77,4 @@ Part2 =
 00010
 01010
 """
+}

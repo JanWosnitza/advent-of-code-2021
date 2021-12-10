@@ -34,8 +34,8 @@ Part2 =
     input.AllFish
     |> Seq.countBy id
     |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
-}
 
-<| """
+TestInput =  """
 3,4,3,1,2
 """
+}

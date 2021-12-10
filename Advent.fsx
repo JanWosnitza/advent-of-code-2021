@@ -79,6 +79,7 @@ type AdventDay<'input, 'answer1, 'answer2> =
         Parse : string[] -> 'input
         Part1 : 'answer1 * ('input -> 'answer1)
         Part2 : ('answer2 * ('input -> 'answer2))
+        TestInput : string
     }
 
 let private measure (message1:string) (f) (message2:_->string) =
@@ -91,10 +92,10 @@ let private measure (message1:string) (f) (message2:_->string) =
 
     x
 
-let Day (day:int) (data:AdventDay<_,_,_>) (testInput:string) =
+let Day (day:int) (data:AdventDay<_,_,_>) =
     printfn $"Day {day} - https://adventofcode.com/2021/day/{day}"
 
-    let inputType, input = getInput day testInput
+    let inputType, input = getInput day data.TestInput
 
     let input =
         measure
