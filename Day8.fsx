@@ -12,7 +12,23 @@ type Row =
         Output : Segment list list
     }
 
-type Permuation = Permuation of Collections.Generic.IDictionary<Segment, Segment>
+type Permuation = Permuation of Map<Segment, Segment>
+
+let segmentMap =
+    [
+        0, [A;B;C;E;F;G]
+        1, [C;F]
+        2, [A;C;D;E;G]
+        3, [A;C;D;F;G]
+        4, [B;C;D;F]
+        5, [A;B;D;F;G]
+        6, [A;B;D;E;F;G]
+        7, [A;C;F]
+        8, [A;B;C;D;E;F;G]
+        9, [A;B;C;D;F;G]
+    ]
+    |> Seq.map (fun (a, b) -> b, a)
+    |> Map.ofSeq
 
 Day 8 {
 Parse =
@@ -80,25 +96,16 @@ Part2 =
         let all = [A;B;C;D;E;F;G]
         permute all
         |> List.map (List.zip all)
-        |> List.map (dict >> Permuation)
+        |> List.map (Map.ofSeq >> Permuation)
+
+    let tryConvert segments = segmentMap |> Map.tryFind segments
 
     let tryMap (Permuation perm) (segemts) =
         segemts
-        |> Seq.map (fun s -> perm.[s])
+        |> Seq.map (fun s -> Map.find s perm)
         |> Seq.sort
         |> Seq.toList
-        |> function
-            | [A;B;C;E;F;G] -> Some 0
-            | [C;F] -> Some 1
-            | [A;C;D;E;G] -> Some 2
-            | [A;C;D;F;G]  -> Some 3
-            | [B;C;D;F] -> Some 4
-            | [A;B;D;F;G] -> Some 5
-            | [A;B;D;E;F;G] -> Some 6
-            | [A;C;F;] -> Some 7
-            | [A;B;C;D;E;F;G] -> Some 8
-            | [A;B;C;D;F;G] -> Some 9
-            | _ -> None
+        |> tryConvert
 
     input.Rows
     |> Array.map (fun row ->
