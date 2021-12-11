@@ -72,7 +72,7 @@ let private getInput (dayOfAdvent:int) (testInput:string) =
         |> prep Real
 
 type NotImplemented = struct end
-let NotImplemented () = NotImplemented(), fun _ -> NotImplemented()
+let NotImplemented = NotImplemented(), fun _ -> NotImplemented()
 
 type AdventDay<'input, 'answer1, 'answer2> =
     {
