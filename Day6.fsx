@@ -6,7 +6,7 @@ let fishLife =
     let rec mem = Util.memoize ()
     let rec recurse (daysLeft) =
         if daysLeft <= 0 then
-            1L
+            1I
         else
             mem recurse (daysLeft - 7) + mem recurse (daysLeft - 9)
 
@@ -16,7 +16,6 @@ let fishLife =
 Day 6 {
 Parse =
     fun input ->
-
     {|
         AllFish =
             input.[0]
@@ -25,15 +24,15 @@ Parse =
     |}
 
 Part1 =
-    5934L, fun input ->
+    5934I, fun input ->
     input.AllFish
     |> Seq.sumBy (fishLife 80)
 
 Part2 =
-    26984457539L, fun input ->
+    26984457539I, fun input ->
     input.AllFish
     |> Seq.countBy id
-    |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * int64 count)
+    |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * bigint count)
 
 TestInput =  """
 3,4,3,1,2
