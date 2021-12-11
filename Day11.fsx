@@ -33,7 +33,7 @@ let flashAt (position:Position) (state:State) : State =
         ))
     )
 
-let doFlashes (state:State) =
+let tryDoFlashes (state:State) =
     let flashPositions =
         state
         |> Map.toSeq
@@ -41,39 +41,26 @@ let doFlashes (state:State) =
         |> Seq.map fst
         |> Seq.toList
 
-    let flashCount = flashPositions.Length
-    let finalState = (flashPositions, state) ||> Seq.foldBack flashAt
-
-    (flashCount, finalState)
+    if flashPositions.Length = 0 then
+        None
+    else
+        (flashPositions, state)
+        ||> Seq.foldBack flashAt
+        |> Some
 
 let step (state:State) =        
     let state =
         state
         |> Map.map (fun _ -> incEnergy)
 
-    let states =
-        state
-        |> List.unfold (fun state ->
-            let (flashCount, state) = doFlashes state
-            if flashCount <= 0 then None else
-            Some ((flashCount, state), state)
-        )
-
-    let flashCount = states |> List.sumBy fst
-    let finalState =
-        states
-        |> List.tryLast
-        |> Option.map snd
-        |> Option.defaultValue state
-
-    (flashCount, finalState)
+    state
+    |> List.unfold (tryDoFlashes >> Option.map (fun state -> (state, state)))
+    |> List.tryLast
+    |> Option.defaultValue state
 
 let steps (state:State) =
     state
-    |> Seq.unfold (fun (state) ->
-        let flashs, state = step state
-        Some ((flashs, state), state)
-    )
+    |> Seq.unfold (step >> (fun state -> Some (state, state)))
 
 Day 11 {
 Parse =
@@ -98,13 +85,17 @@ Part1 =
     input.State
     |> steps
     |> Seq.take 100
-    |> Seq.sumBy fst
+    |> Seq.sumBy (fun state ->
+        state
+        |> Map.filter (fun _ {Energy=energy} -> energy = 0)
+        |> Map.count
+    )
 
 Part2 =
     195, fun input ->
     input.State
     |> steps
-    |> Seq.findIndex (fun (flashCount, _) -> flashCount = input.State.Count)
+    |> Seq.findIndex (Map.forall (fun _ {Energy=energy} -> energy = 0))
     |> (+) 1
 
 TestInput = """
