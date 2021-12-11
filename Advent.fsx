@@ -87,8 +87,8 @@ let private measure (message1:string) (f) (message2:_->string) =
     let watch = Stopwatch.StartNew()
     let x = f ()
     watch.Stop()
-    let message2 = message2 x    
-    printfn $" {message2} {String(' ', 40 - message1.Length - message2.Length)} {watch.Elapsed}"
+    let message2 = message2 x
+    printfn $" {message2} {String(' ', max 1 (40 - message1.Length - message2.Length) )} {watch.Elapsed}"
 
     x
 
