@@ -25,13 +25,14 @@ Parse =
 
 Part1 =
     15, fun input ->
-    input.Heightmap
-    |> Map.toSeq
-    |> Seq.filter (fun (position, height) ->
+    let isLowest (position, height) =
         getNeighbours position
         |> Seq.choose (fun position -> Map.tryFind position input.Heightmap)
         |> Seq.forall (fun neighbourHeight -> height < neighbourHeight)
-    )
+
+    input.Heightmap
+    |> Map.toSeq
+    |> Seq.filter isLowest
     |> Seq.map (snd >> (+)1)
     |> Seq.toList
     |> Seq.sum
@@ -47,17 +48,21 @@ Part2 =
             (Set.add position visited, getNeighbours position)
             ||> Seq.fold (findNeighboursRecursive validPositions)
 
-    let basins =
-        input.Heightmap
-        |> Map.toSeq
-        |> Seq.choose (fun (position, height) -> if height < 9 then Some position else None)
-        |> Set.ofSeq
+    let groupConnected (positions:Set<int * int>) =
+        positions
         |> List.unfold (fun positions ->
             if positions.IsEmpty then None else
             let position = Set.minElement positions
             let set = findNeighboursRecursive positions Set.empty position
             Some (set, Set.difference positions set)
         )
+
+    let basins =
+        input.Heightmap
+        |> Map.toSeq
+        |> Seq.choose (fun (position, height) -> if height < 9 then Some position else None)
+        |> Set.ofSeq
+        |> groupConnected
 
     basins
     |> Seq.map Set.count

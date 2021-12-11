@@ -2,6 +2,10 @@
 #load "Advent.fsx"
 open Advent
 
+let countIncrements =
+    Seq.pairwise
+    >> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
+
 Day 1 {
 Parse =
     fun input ->
@@ -14,16 +18,14 @@ Parse =
 Part1 =
     7, fun input ->
     input.Depths
-    |> Seq.pairwise
-    |> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
+    |> countIncrements
 
 Part2 =
     5, fun input ->
     input.Depths
     |> Seq.windowed 3
     |> Seq.map Seq.sum
-    |> Seq.pairwise
-    |> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
+    |> countIncrements
 
 TestInput = """
 199

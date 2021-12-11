@@ -10,6 +10,19 @@ type TestResult =
     | InvalidClose of BracketType
     | MissingCloses of BracketType list
 
+let rec test (expectedClose) (rest) =
+    match expectedClose, rest with
+    | _, (Open, btype) :: rest' ->
+        test (btype :: expectedClose) rest'
+
+    | expectedBtype :: expectedClose', (Close, btype) :: rest'
+        when btype = expectedBtype ->
+        test expectedClose' rest'
+
+    | [], [] -> Valid
+    | _, (_, btype) :: _ -> InvalidClose btype
+    | missing, [] -> MissingCloses missing
+
 Day 10 {
 Parse =
     fun input ->
@@ -24,29 +37,17 @@ Parse =
         )
         |> Seq.toList
 
-    let rec test (expectedClose) (rest) =
-        match expectedClose, rest with
-        | _, (Open, btype) :: rest' ->
-            test (btype :: expectedClose) rest'
-
-        | expectedBtype :: expectedClose', (Close, btype) :: rest'
-            when btype = expectedBtype ->
-            test expectedClose' rest'
-
-        | [], [] -> Valid
-        | _, (_, btype) :: _ -> InvalidClose btype
-        | missing, [] -> MissingCloses missing
-
     {|
-        TestResults =
+        Lines =
             input
-            |> Seq.map (convert >> test [])
+            |> Seq.map convert
             |> Seq.toList
     |}
 
 Part1 =
     26397, fun input ->
-    input.TestResults
+    input.Lines
+    |> Seq.map (test [])
     |> Seq.choose (function | InvalidClose btype -> Some btype | _ -> None)
     |> Seq.sumBy (function
         |  Round ->     3
@@ -58,19 +59,18 @@ Part1 =
 Part2 =
     288957L, fun input ->
     let scores =
-        input.TestResults
+        input.Lines
+        |> Seq.map (test [])
         |> Seq.choose (function | MissingCloses missing -> Some missing | _ -> None)
         |> Seq.map (fun missing ->
-            let res =
-                missing
-                |> Seq.map (function
-                    |  Round -> 1L
-                    | Square -> 2L
-                    |  Curly -> 3L
-                    |  Angle -> 4L
-                )
-                |> Seq.fold (fun s d -> s * 5L + d) 0L
-            res
+            missing
+            |> Seq.map (function
+                |  Round -> 1L
+                | Square -> 2L
+                |  Curly -> 3L
+                |  Angle -> 4L
+            )
+            |> Seq.fold (fun s d -> s * 5L + d) 0L
         )
         |> Seq.sort
         |> Seq.toList

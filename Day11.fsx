@@ -10,6 +10,7 @@ type State = Map<Position, Octopus>
 
 let incEnergy (octopus) = {octopus with Energy = octopus.Energy + 1}
 let zeroEnergy (octopus) = {octopus with Energy = 0}
+let hadFlashed {Energy=energy} = energy = 0
 
 let getNeighbours {X = x; Y = y} =
     [
@@ -87,7 +88,7 @@ Part1 =
     |> Seq.take 100
     |> Seq.sumBy (fun state ->
         state
-        |> Map.filter (fun _ {Energy=energy} -> energy = 0)
+        |> Map.filter (fun _ -> hadFlashed)
         |> Map.count
     )
 
@@ -95,7 +96,7 @@ Part2 =
     195, fun input ->
     input.State
     |> steps
-    |> Seq.findIndex (Map.forall (fun _ {Energy=energy} -> energy = 0))
+    |> Seq.findIndex (Map.forall (fun _ -> hadFlashed))
     |> (+) 1
 
 TestInput = """

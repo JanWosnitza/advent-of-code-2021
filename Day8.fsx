@@ -2,14 +2,14 @@
 #load "Advent.fsx"
 open Advent
 
-open System
-
 type Segment = A | B | C | D | E | F | G
+
+type Digit = Digit of Segment list
 
 type Row =
     {
-        Input : Segment list list
-        Output : Segment list list
+        Input : Digit list
+        Output : Digit list
     }
 
 type Permuation = Permuation of Map<Segment, Segment>
@@ -47,6 +47,7 @@ Parse =
         )
         |> Seq.sort
         |> Seq.toList
+        |> Digit
 
     {|
         Rows =
@@ -74,7 +75,8 @@ Part1 =
     26, fun input ->
     input.Rows
     |> Seq.collect (fun row -> row.Output)
-    |> Seq.filter (List.length >> function
+    |> Seq.filter (fun (Digit digit) ->
+        match digit |> List.length with
         | 2 | 3 | 4 | 7 -> true
         | _ -> false
     )
@@ -100,21 +102,23 @@ Part2 =
 
     let tryConvert segments = segmentMap |> Map.tryFind segments
 
-    let tryMap (Permuation perm) (segemts) =
-        segemts
+    let tryMap (Permuation perm) (Digit digit) =
+        digit
         |> Seq.map (fun s -> Map.find s perm)
         |> Seq.sort
         |> Seq.toList
         |> tryConvert
 
+    let findValidPermutation (input:Digit list) =
+        permutations
+        |> List.find (fun perm ->
+            input
+            |> List.forall (tryMap perm >> Option.isSome)
+        )
+
     input.Rows
     |> Array.map (fun row ->
-        let perm =
-            permutations
-            |> List.find (fun perm ->
-                row.Input
-                |> List.forall (tryMap perm >> Option.isSome)
-            )
+        let perm = findValidPermutation row.Input
 
         row.Output
         |> Seq.map (tryMap perm >> Option.get)
