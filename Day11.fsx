@@ -8,6 +8,23 @@ type Position = {X : int; Y : int}
 
 type State = Map<Position, Octopus>
 
+let parse = Input.toMultiline >> fun input ->
+    {|
+        State =
+            input
+            |> Seq.mapi (fun x row ->
+                row
+                |> Seq.mapi (fun y c ->
+                    let pos = {X = x; Y = y}
+                    let octo = {Energy = int c - int '0'}
+                    pos, octo
+                )
+            )
+            |> Seq.collect id
+            |> Map.ofSeq
+            : State
+    |}
+
 let incEnergy (octopus) = {octopus with Energy = octopus.Energy + 1}
 let zeroEnergy (octopus) = {octopus with Energy = 0}
 let hadFlashed {Energy=energy} = energy = 0
@@ -63,26 +80,7 @@ let steps (state:State) =
     state
     |> Seq.unfold (step >> (fun state -> Some (state, state)))
 
-Day 11 {
-Parse =
-    fun input ->
-    {|
-        State =
-            input
-            |> Seq.mapi (fun x row ->
-                row
-                |> Seq.mapi (fun y c ->
-                    let pos = {X = x; Y = y}
-                    let octo = {Energy = int c - int '0'}
-                    pos, octo
-                )
-            )
-            |> Seq.collect id
-            |> Map.ofSeq
-    |}
-
-Part1 =
-    1656, fun input ->
+let part1 = parse >> fun input ->
     input.State
     |> steps
     |> Seq.take 100
@@ -92,14 +90,14 @@ Part1 =
         |> Map.count
     )
 
-Part2 =
-    195, fun input ->
+let part2 = parse >> fun input ->
     input.State
     |> steps
     |> Seq.findIndex (Map.forall (fun _ -> hadFlashed))
     |> (+) 1
 
-TestInput = """
+////////////////////////////////
+let testInput1 = """
 5483143223
 2745854711
 5264556173
@@ -111,4 +109,12 @@ TestInput = """
 4846848554
 5283751526
 """
-}
+
+AoC.Day 11 [
+    AoC.Part part1 [
+        testInput1, 1656
+    ]
+    AoC.Part part2 [
+        testInput1, 195
+    ]
+]

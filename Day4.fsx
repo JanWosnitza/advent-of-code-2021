@@ -6,25 +6,11 @@ type DrawList = DrawList of int list
 
 type Board = Board of int[][]
 
-let getScore (round) (Board board) =
-    let (DrawList drawList) = round
-    let lastDrawnNumber = List.head drawList
-
-    let sum =
-        board
-        |> Seq.collect id
-        |> Seq.filter (fun x -> List.contains x drawList |> not)
-        |> Seq.sum
-
-    (lastDrawnNumber * sum)
-    
-Day 4 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     let rounds =
         input
         |> Array.head
-        |> Util.stringSplit [","]
+        |> Input.split [","]
         |> Seq.map int
         |> Seq.toList
         |> List.rev
@@ -39,8 +25,8 @@ Parse =
             x
             |> Seq.tail // skip empty row
             |> Seq.map (
-                Util.stringSplit ["  "; " "]
-                >> Seq.map (Util.stringTrim >> int)
+                Input.split ["  "; " "]
+                >> Seq.map (Input.trim >> int)
                 >> Seq.toArray
             )
             |> Seq.toArray
@@ -62,19 +48,32 @@ Parse =
             )
     |}
 
-Part1 = 4512, fun input ->
+let getScore (round) (Board board) =
+    let (DrawList drawList) = round
+    let lastDrawnNumber = List.head drawList
+
+    let sum =
+        board
+        |> Seq.collect id
+        |> Seq.filter (fun x -> List.contains x drawList |> not)
+        |> Seq.sum
+
+    (lastDrawnNumber * sum)
+    
+let part1 = parse >> fun input ->
     input.BoardsWithWinRound
     |> List.minBy fst
     |> snd
     ||> getScore
 
-Part2 = 1924, fun input ->
+let part2 = parse >> fun input ->
     input.BoardsWithWinRound
     |> List.maxBy fst
     |> snd
     ||> getScore
 
-TestInput = """
+///////////////////////////////
+let testInput1 = """
 7,4,9,5,11,17,23,2,0,14,21,24,10,16,13,6,15,25,12,22,18,20,8,19,3,26,1
 
 22 13 17 11  0
@@ -95,4 +94,12 @@ TestInput = """
 22 11 13  6  5
  2  0 12  3  7
 """
-}
+
+AoC.Day 4 [
+    AoC.Part part1 [
+        testInput1, 4512
+    ]
+    AoC.Part part2 [
+        testInput1, 1924
+    ]
+]

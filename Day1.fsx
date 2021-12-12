@@ -1,33 +1,30 @@
-// https://adventofcode.com/2021/day/1
 #load "Advent.fsx"
 open Advent
 
-let countIncrements =
-    Seq.pairwise
-    >> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
-
-Day 1 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     {|
         Depths =
             input
             |> Seq.map int
     |}
 
-Part1 =
-    7, fun input ->
+let countIncrements =
+    Seq.pairwise
+    >> Seq.sumBy (fun (a, b) -> if a < b then 1 else 0)
+
+let part1 = parse >> fun input ->
     input.Depths
     |> countIncrements
 
-Part2 =
-    5, fun input ->
+let part2 = parse >> fun input ->
     input.Depths
     |> Seq.windowed 3
     |> Seq.map Seq.sum
     |> countIncrements
 
-TestInput = """
+///////////////////
+
+let input1 = """
 199
 200
 208
@@ -39,4 +36,12 @@ TestInput = """
 260
 263
 """
-}
+
+AoC.Day 1 [
+    AoC.Part part1 [
+        input1, 7
+    ]
+    AoC.Part part2 [
+        input1, 5
+    ]
+]

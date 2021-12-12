@@ -12,28 +12,7 @@ type Row =
         Output : Digit list
     }
 
-type Permuation = Permuation of Map<Segment, Segment>
-
-let segmentMap =
-    [
-        0, [A;B;C;E;F;G]
-        1, [C;F]
-        2, [A;C;D;E;G]
-        3, [A;C;D;F;G]
-        4, [B;C;D;F]
-        5, [A;B;D;F;G]
-        6, [A;B;D;E;F;G]
-        7, [A;C;F]
-        8, [A;B;C;D;E;F;G]
-        9, [A;B;C;D;F;G]
-    ]
-    |> Seq.map (fun (a, b) -> b, a)
-    |> Map.ofSeq
-
-Day 8 {
-Parse =
-    fun input ->
-
+let parse = Input.toMultiline >> fun input ->
     let convert (x:string) =
         x |> Seq.map (function
             | 'a' -> A
@@ -53,17 +32,17 @@ Parse =
         Rows =
             input
             |> Array.map (fun row ->
-                match row |> Util.stringSplit [" | "] with
+                match row |> Input.split [" | "] with
                 | [|input; output|] ->
                     {
                         Input =
                             input
-                            |> Util.stringSplit [" "]
+                            |> Input.split [" "]
                             |> Seq.map convert
                             |> Seq.toList
                         Output =
                             output
-                            |> Util.stringSplit [" "]
+                            |> Input.split [" "]
                             |> Seq.map convert
                             |> Seq.toList
                     }
@@ -71,8 +50,25 @@ Parse =
             )
     |}
 
-Part1 =
-    26, fun input ->
+type Permuation = Permuation of Map<Segment, Segment>
+
+let segmentMap =
+    [
+        0, [A;B;C;E;F;G]
+        1, [C;F]
+        2, [A;C;D;E;G]
+        3, [A;C;D;F;G]
+        4, [B;C;D;F]
+        5, [A;B;D;F;G]
+        6, [A;B;D;E;F;G]
+        7, [A;C;F]
+        8, [A;B;C;D;E;F;G]
+        9, [A;B;C;D;F;G]
+    ]
+    |> Seq.map (fun (a, b) -> b, a)
+    |> Map.ofSeq
+
+let part1 = parse >> fun input ->
     input.Rows
     |> Seq.collect (fun row -> row.Output)
     |> Seq.filter (fun (Digit digit) ->
@@ -82,8 +78,7 @@ Part1 =
     )
     |> Seq.length
 
-Part2 =
-    61229, fun input ->
+let part2 = parse >> fun input ->
     // this is brute force. given the amount of permutaions (5040) it's not a problem
     // BUT solving this with logical programming would be more interesting
 
@@ -126,7 +121,8 @@ Part2 =
     )
     |> Array.sum
 
-TestInput =  """
+////////////////
+let testInput1 =  """
 be cfbegad cbdgef fgaecd cgeb fdcge agebfd fecdb fabcd edb | fdgacbe cefdb cefbgd gcbe
 edbfga begcd cbg gc gcadebf fbgde acbgfd abcde gfcbed gfec | fcgedb cgb dgebacf gc
 fgaebd cg bdaec gdafb agbcfd gdcbef bgcad gfac gcb cdgabef | cg cg fdcagb cbg
@@ -138,4 +134,12 @@ bdfegc cbegaf gecbf dfcage bdacg ed bedf ced adcbefg gebcd | ed bcgafe cdgba cbg
 egadfb cdbfeg cegd fecab cgb gbdefca cg fgcdab egfdb bfceg | gbdfcae bgc cg cgb
 gcafb gcf dcaebfg ecagb gf abcdeg gaef cafbge fdbac fegbdc | fgae cfgab fg bagce
 """
-}
+
+AoC.Day 8 [
+    AoC.Part part1 [
+        testInput1, 26
+    ]
+    AoC.Part part2 [
+        testInput1, 61229
+    ]
+]

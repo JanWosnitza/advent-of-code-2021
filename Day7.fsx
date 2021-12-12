@@ -2,12 +2,10 @@
 #load "Advent.fsx"
 open Advent
 
-Day 7 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     let hPositions =
         input.[0]
-        |> Util.stringSplit [","]
+        |> Input.split [","]
         |> Array.map int
         |> Array.sort
 
@@ -16,13 +14,11 @@ Parse =
         MedianPosition = hPositions.[hPositions.Length / 2]
     |}
 
-Part1 =
-    37, fun input ->
+let part1 = parse >> fun input ->
     input.HPositions
     |> Array.sumBy ((-) input.MedianPosition >> abs)
 
-Part2 =
-    168, fun input ->
+let part2 = parse >> fun input ->
     let averagePosition =
         input.HPositions
         |> Seq.averageBy float
@@ -43,7 +39,16 @@ Part2 =
     |> Seq.find (fun (a, b) -> a < b)
     |> fst
 
-TestInput =  """
+//////////////////
+let testInput1 = """
 16,1,2,0,4,2,7,1,2,14
 """
-}
+
+AoC.Day 7 [
+    AoC.Part part1 [
+        testInput1, 37
+    ]
+    AoC.Part part2 [
+        testInput1, 168
+    ]
+]

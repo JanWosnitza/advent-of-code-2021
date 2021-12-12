@@ -3,11 +3,6 @@ open System.Diagnostics
 open System.IO
 
 module Util =
-    let stringTrim (x:string) = x.Trim()
-
-    let stringSplit (splits:string seq) (x:string) =
-        x.Trim().Split(Array.ofSeq splits, StringSplitOptions.None)
-
     let memoize () =
         let cache = System.Collections.Generic.Dictionary<_,_>()
         fun (f) (x) ->
@@ -18,106 +13,97 @@ module Util =
             cache.Add(x, ret)
             ret
 
-open Util
+module Input =
+    let trim (x:string) = x.Trim()
 
-type Session = {Name:string; Key:string}
+    let split (splits:string seq) (x:string) =
+        x.Trim().Split(Array.ofSeq splits, StringSplitOptions.None)
 
-let private dirSessions = Path.Combine(__SOURCE_DIRECTORY__ , "sessions")
+    let toMultiline (x:string) =
+        x
+        |> trim
+        |> split ["\n"; "\r\n"]
 
-let private session =
-    let lastArg = System.Environment.GetCommandLineArgs() |> Array.last
-    let sessionPath = Path.Combine(dirSessions, lastArg)
-    
-    if File.Exists(sessionPath) then
-        let key = IO.File.ReadAllText(sessionPath).Trim()
-        Some {Name = lastArg; Key = key}
-    elif lastArg.Length = 96 && (not <| lastArg.EndsWith(".fsx", StringComparison.InvariantCultureIgnoreCase)) then
-        Some {Name = lastArg; Key = lastArg}
-    else
-        printfn $"No Session => Test Mode"
-        None
+module AoC =
+    type Session = {Name:string; Key:string}
 
-type InputType = Test | Real
+    let private dirSessions = Path.Combine(__SOURCE_DIRECTORY__ , "sessions")
 
-let private getInput (dayOfAdvent:int) (testInput:string) =
-    let prep (inputType) (raw) =
-        inputType,
-        raw
-        |> stringTrim
-        |> stringSplit ["\n"; "\r\n"]
-
-    match session with
-    | None ->
-        testInput
-        |> prep Test
-    | Some {Name=sessionName; Key=sessionKey} ->
-        let rawInput =
-            let dirCache = Path.Combine(dirSessions, $"{sessionName}_cache")
-            Directory.CreateDirectory(dirCache) |> ignore
-
-            let cachedPath = Path.Combine(dirCache, $"{dayOfAdvent}.txt")
-            if File.Exists(cachedPath) then
-                File.ReadAllText(cachedPath)
-            else
-                let response =
-                    use cl = new Net.Http.HttpClient()
-                    cl.DefaultRequestHeaders.Add("cookie", $"session={sessionKey}")
-                    cl.GetStringAsync($"https://adventofcode.com/2021/day/{dayOfAdvent}/input")
-                    |> Async.AwaitTask
-                    |> Async.RunSynchronously
-                File.WriteAllText(cachedPath, response)
-                response
-
-        rawInput
-        |> prep Real
-
-type NotImplemented = struct end
-let NotImplemented = NotImplemented(), fun _ -> NotImplemented()
-
-type AdventDay<'input, 'answer1, 'answer2> =
-    {
-        Parse : string[] -> 'input
-        Part1 : 'answer1 * ('input -> 'answer1)
-        Part2 : ('answer2 * ('input -> 'answer2))
-        TestInput : string
-    }
-
-let private measure (message1:string) (f) (message2:_->string) =
-    printf "%s" message1
-    let watch = Stopwatch.StartNew()
-    let x = f ()
-    watch.Stop()
-    let message2 = message2 x
-    printfn $" {message2} {String(' ', max 1 (40 - message1.Length - message2.Length) )} {watch.Elapsed}"
-
-    x
-
-let Day (day:int) (data:AdventDay<_,_,_>) =
-    printfn $"Day {day} - https://adventofcode.com/2021/day/{day}"
-
-    let inputType, input = getInput day data.TestInput
-
-    let input =
-        measure
-            "  Parsing:"
-            (fun () -> data.Parse input)
-            (fun _ -> "OK")
-
-    let test (name) (expected:'answer, solve) =
-        if typeof<'answer> = typeof<NotImplemented> then
-            printfn $"  {name}: NO IMPLEMENTAION"
+    let private session =
+        let lastArg = System.Environment.GetCommandLineArgs() |> Array.last
+        let sessionPath = Path.Combine(dirSessions, lastArg)
+        
+        if File.Exists(sessionPath) then
+            let key = IO.File.ReadAllText(sessionPath).Trim()
+            Some {Name = lastArg; Key = key}
+        elif lastArg.Length = 96 && (not <| lastArg.EndsWith(".fsx", StringComparison.InvariantCultureIgnoreCase)) then
+            Some {Name = lastArg; Key = lastArg}
         else
-            measure
-                $"  {name}:"
-                (fun () -> solve input)
-                (fun result ->
-                    match inputType with
-                    | Test when result = expected -> $"SUCCESS"
-                    | Test -> $"FAILED with {result}"
-                    | Real -> $"{result}"
-                )
-            |> ignore
+            None
 
-    data.Part1 |> test "Part 1"
-    data.Part2 |> test "Part 2"
-    // TODO Post solution to webserver and show result XDDDD
+    let private tryGetInput (dayOfAdvent:int) =
+        session |> Option.map (fun (session) ->
+        let dirCache = Path.Combine(dirSessions, $"{session.Name}_cache")
+        Directory.CreateDirectory(dirCache) |> ignore
+
+        let cachedPath = Path.Combine(dirCache, $"{dayOfAdvent}.txt")
+        if File.Exists(cachedPath) then
+            File.ReadAllText(cachedPath)
+        else
+            let response =
+                use cl = new Net.Http.HttpClient()
+                cl.DefaultRequestHeaders.Add("cookie", $"session={session.Key}")
+                cl.GetStringAsync($"https://adventofcode.com/2021/day/{dayOfAdvent}/input")
+                |> Async.AwaitTask
+                |> Async.RunSynchronously
+            File.WriteAllText(cachedPath, response)
+            response
+        )
+
+    let private measure f x =
+        let watch = Stopwatch.StartNew()
+        let x = f x
+        watch.Stop()
+        (watch.Elapsed, x)
+
+    type PartExec =
+        | Test
+        | Run of string
+
+    type Part = Part of (int -> PartExec -> unit)
+
+    let Part (f:string->'a) (inputs:(string * 'a) list) =
+        let inputs =
+            inputs
+            |> List.map (fun (input, expected) -> (input.TrimStart(), expected))
+
+        let formatTime (time:TimeSpan) =
+            let time = time.TotalSeconds.ToString("0.0000")
+            $"[{time}s]"
+
+        Part <| fun part exec ->
+        match exec with
+        | Test ->
+            printfn $"  Part {part}"
+            inputs
+            |> List.iteri (fun i (input, expected) ->
+                let time, result = measure f input
+                let result = f input
+                if result <> expected then
+                    printfn $"    #{i} {formatTime time} FAILURE with {result}"
+                else
+                    printfn $"    #{i} {formatTime time} SUCCESS"
+            )
+        | Run input ->
+            printfn $"  Part {part}"
+            let time, result = measure f input
+            printfn $"    {formatTime time} {result}"
+
+    let Day (day:int) (tests:Part list) =
+        printfn $"Day {day}"
+        let exec =
+            match tryGetInput day with
+            | None -> Test
+            | Some input -> Run input
+        tests
+        |> List.iteri (fun i (Part f) -> f i exec)

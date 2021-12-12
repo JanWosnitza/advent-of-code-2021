@@ -2,13 +2,7 @@
 #load "Advent.fsx"
 open Advent
 
-let binaryToInteger (binary:bool seq) =
-    (0, binary)
-    ||> Seq.fold (fun value -> function true -> value * 2 + 1 | false -> value * 2)
-
-Day 3 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     {|
         Rows =
             input
@@ -19,8 +13,11 @@ Parse =
             )
     |}
 
-Part1 =
-    198, fun input ->
+let binaryToInteger (binary:bool seq) =
+    (0, binary)
+    ||> Seq.fold (fun value -> function true -> value * 2 + 1 | false -> value * 2)
+
+let part1 = parse >> fun input ->
     let colCounts =
         input.Rows
         |> Seq.transpose
@@ -38,8 +35,7 @@ Part1 =
 
     GammaRate * EpsilonRate
 
-Part2 = 
-    230, fun input ->
+let part2 = parse >> fun input ->
     let find (selector) (input) =
         let rec loop (index) (input) =
             let ones, zeros =
@@ -63,7 +59,8 @@ Part2 =
 
     OxigenGeneratorRating * Co2ScrubberRating
 
-TestInput =  """
+///////////////////////////
+let testInput1 =  """
 00100
 11110
 10110
@@ -77,4 +74,12 @@ TestInput =  """
 00010
 01010
 """
-}
+
+AoC.Day 3 [
+    AoC.Part part1 [
+        testInput1, 198
+    ]
+    AoC.Part part2 [
+        testInput1, 230
+    ]
+]

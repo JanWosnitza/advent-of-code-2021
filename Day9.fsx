@@ -2,15 +2,7 @@
 #load "Advent.fsx"
 open Advent
 
-let getNeighbours (x, y) =
-    [
-        x - 1, y; x + 1, y
-        x, y - 1; x, y + 1
-    ]
-
-Day 9 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     {|
         Heightmap =
             input
@@ -23,8 +15,13 @@ Parse =
             |> Map.ofSeq
     |}
 
-Part1 =
-    15, fun input ->
+let getNeighbours (x, y) =
+    [
+        x - 1, y; x + 1, y
+        x, y - 1; x, y + 1
+    ]
+
+let part1 = parse >> fun input ->
     let isLowest (position, height) =
         getNeighbours position
         |> Seq.choose (fun position -> Map.tryFind position input.Heightmap)
@@ -37,8 +34,7 @@ Part1 =
     |> Seq.toList
     |> Seq.sum
 
-Part2 =
-    1134, fun input ->
+let part2 = parse >> fun input ->
     let rec findNeighboursRecursive (validPositions) (visited) (position) =
         if Set.contains position visited then
             visited
@@ -70,11 +66,20 @@ Part2 =
     |> Seq.take 3
     |> Seq.reduce (*)
 
-TestInput =  """
+/////////////////////////
+let testInput1 =  """
 2199943210
 3987894921
 9856789892
 8767896789
 9899965678
 """
-}
+
+AoC.Day 9 [
+    AoC.Part part1 [
+        testInput1, 15
+    ]
+    AoC.Part part2 [
+        testInput1, 1134
+    ]
+]

@@ -5,27 +5,7 @@ open Advent
 type BracketType = Round | Square | Curly | Angle
 type BracketKind = Open | Close
 
-type TestResult =
-    | Valid
-    | InvalidClose of BracketType
-    | MissingCloses of BracketType list
-
-let rec test (expectedClose) (rest) =
-    match expectedClose, rest with
-    | _, (Open, btype) :: rest' ->
-        test (btype :: expectedClose) rest'
-
-    | expectedBtype :: expectedClose', (Close, btype) :: rest'
-        when btype = expectedBtype ->
-        test expectedClose' rest'
-
-    | [], [] -> Valid
-    | _, (_, btype) :: _ -> InvalidClose btype
-    | missing, [] -> MissingCloses missing
-
-Day 10 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     let convert line =
         line
         |> Seq.map (function
@@ -44,8 +24,25 @@ Parse =
             |> Seq.toList
     |}
 
-Part1 =
-    26397, fun input ->
+type TestResult =
+    | Valid
+    | InvalidClose of BracketType
+    | MissingCloses of BracketType list
+
+let rec test (expectedClose) (rest) =
+    match expectedClose, rest with
+    | _, (Open, btype) :: rest' ->
+        test (btype :: expectedClose) rest'
+
+    | expectedBtype :: expectedClose', (Close, btype) :: rest'
+        when btype = expectedBtype ->
+        test expectedClose' rest'
+
+    | [], [] -> Valid
+    | _, (_, btype) :: _ -> InvalidClose btype
+    | missing, [] -> MissingCloses missing
+
+let part1 = parse >> fun input ->
     input.Lines
     |> Seq.map (test [])
     |> Seq.choose (function | InvalidClose btype -> Some btype | _ -> None)
@@ -56,8 +53,7 @@ Part1 =
         |  Angle -> 25137
     )
 
-Part2 =
-    288957L, fun input ->
+let part2 = parse >> fun input ->
     let scores =
         input.Lines
         |> Seq.map (test [])
@@ -77,7 +73,8 @@ Part2 =
     
     scores.[scores.Length / 2]
 
-TestInput =  """
+///////////////////////
+let testInput1 =  """
 [({(<(())[]>[[{[]{<()<>>
 [(()[<>])]({[<{<<[]>>(
 {([(<{}[<>[]}>{[]{[(<()>
@@ -89,4 +86,12 @@ TestInput =  """
 <{([([[(<>()){}]>(<<{{
 <{([{{}}[<[[[<>{}]]]>[]]
 """
-}
+
+AoC.Day 10 [
+    AoC.Part part1 [
+        testInput1, 26397
+    ]
+    AoC.Part part2 [
+        testInput1, 288957L
+    ]
+]

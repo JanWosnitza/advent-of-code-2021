@@ -7,22 +7,7 @@ type Regex = FSharp.Text.RegexProvider.Regex< @"^(?<X1>\d+),(?<Y1>\d+) -> (?<X2>
 
 type Vent = {X1 : int; Y1 : int; X2 : int; Y2 : int}
 
-let getPositions (vent:Vent) =
-    let signX = sign (vent.X2 - vent.X1)
-    let signY = sign (vent.Y2 - vent.Y1)
-    let size = if vent.X2 <> vent.X1 then abs (vent.X2 - vent.X1) else abs (vent.Y2 - vent.Y1)
-    seq { for i = 0 to size do yield (vent.X1 + i * signX, vent.Y1 + i * signY) }
-
-let overlaps (vents) =
-    vents
-    |> Seq.collect getPositions
-    |> Seq.countBy id
-    |> Seq.filter (fun (_, count) -> count >= 2)
-    |> Seq.length
-
-Day 5 {
-Parse =
-    fun input ->
+let parse = Input.toMultiline >> fun input ->
     {|
         Vents =
             input
@@ -37,16 +22,30 @@ Parse =
             )
     |}
 
-Part1 = 5, fun input ->
+let getPositions (vent:Vent) =
+    let signX = sign (vent.X2 - vent.X1)
+    let signY = sign (vent.Y2 - vent.Y1)
+    let size = if vent.X2 <> vent.X1 then abs (vent.X2 - vent.X1) else abs (vent.Y2 - vent.Y1)
+    seq { for i = 0 to size do yield (vent.X1 + i * signX, vent.Y1 + i * signY) }
+
+let overlaps (vents) =
+    vents
+    |> Seq.collect getPositions
+    |> Seq.countBy id
+    |> Seq.filter (fun (_, count) -> count >= 2)
+    |> Seq.length
+
+let part1 = parse >> fun input ->
     input.Vents
     |> Seq.filter (fun vent -> vent.X1 = vent.X2 || vent.Y1 = vent.Y2)
     |> overlaps
 
-Part2 = 12, fun input ->
+let part2 = parse >> fun input ->
     input.Vents
     |> overlaps
 
-TestInput =  """
+////////////////////////////
+let testInput1 =  """
 0,9 -> 5,9
 8,0 -> 0,8
 9,4 -> 3,4
@@ -58,4 +57,12 @@ TestInput =  """
 0,0 -> 8,8
 5,5 -> 8,2
 """
-}
+
+AoC.Day 5 [
+    AoC.Part part1 [
+        testInput1, 5
+    ]
+    AoC.Part part2 [
+        testInput1, 12
+    ]
+]
