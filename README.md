@@ -1,14 +1,14 @@
 # Advent of Code 2021
 My F# solutions of https://adventofcode.com/ 
 
-## Use Test Data
-```dotnet fsi Day-X.fsx```
+## Run tests
+    Day 1
 
-## Use Real Data
-Put a session-key in a file in sessions folder and call:
-```dotnet fsi Day-X.fsx FILE_NAME```.
+## Run against your private input
+Get your session-key from the web-site's cookies (login and use developer tools).
 
-Or simply use the session-key like this:
-```dotnet fsi Day-X.fsx SESSION```
+    Day 1 [SESSION_KEY]
 
-Session-key is retrieved from web-site's cookies.
+OR create a file in `sessions/[FILE_NAME]` and put your session-key in there.
+
+    Day X [FILE_NAME]
