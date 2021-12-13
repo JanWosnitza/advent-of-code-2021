@@ -70,7 +70,7 @@ module AoC =
         | Test
         | Run of string
 
-    type Part = Part of (int -> PartExec -> unit)
+    type Part = Part of (string -> int -> PartExec -> unit)
 
     let Part (f:string->'a) (inputs:(string * 'a) list) =
         let inputs =
@@ -81,29 +81,32 @@ module AoC =
             let time = time.TotalSeconds.ToString("0.0000")
             $"[{time}s]"
 
-        Part <| fun part exec ->
+        Part <| fun context part exec ->
         match exec with
         | Test ->
-            printfn $"  Part {part}"
             inputs
             |> List.iteri (fun i (input, expected) ->
+                printf $"{context} Part{part} Test{i + 1}"
                 let time, result = measure f input
+                printfn $" {formatTime time}"
                 let result = f input
                 if result <> expected then
-                    printfn $"    #{i} {formatTime time} FAILURE with {result}"
+                    printfn $"FAILURE:"
+                    printfn $"{result}"
                 else
-                    printfn $"    #{i} {formatTime time} SUCCESS"
+                    printfn $"SUCCESS"
             )
         | Run input ->
-            printfn $"  Part {part}"
+            printf $"{context} Part{part}"
             let time, result = measure f input
-            printfn $"    {formatTime time} {result}"
+            printfn $" {formatTime time}"
+            printfn $"{result}"
 
     let Day (day:int) (tests:Part list) =
-        printfn $"Day {day}"
+        let context = $"Day{day}"
         let exec =
             match tryGetInput day with
             | None -> Test
             | Some input -> Run input
         tests
-        |> List.iteri (fun i (Part f) -> f i exec)
+        |> List.iteri (fun i (Part f) -> f context (i + 1) exec)
