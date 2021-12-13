@@ -1,5 +1,5 @@
 # Advent of Code 2021
-My F# solutions of https://adventofcode.com/ 
+My F# solutions of https://adventofcode.com/2021
 
 ## Run tests
     Day 1
