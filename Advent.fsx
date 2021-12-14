@@ -2,6 +2,9 @@ open System
 open System.Diagnostics
 open System.IO
 
+[<Struct>]
+type Tree<'Branch, 'Leaf> = TreeBranch of Children:list<'Branch> | TreeLeaf of Leaf:'Leaf
+
 module Util =
     let memoize () =
         let cache = System.Collections.Generic.Dictionary<_,_>()
@@ -12,6 +15,37 @@ module Util =
             let ret = f x
             cache.Add(x, ret)
             ret
+
+    let treeFold (toTree) (folder) (identiy) =
+        let values = System.Collections.Generic.Dictionary<_,_>()
+        
+        let rec recurse (branchStack) =
+            match branchStack with
+            | [] -> failwith ""
+
+            | (parent, value, []) :: [] ->
+                value
+
+            | (child, childValue, []) :: (parent, parentValue, children) :: branchStack ->
+                values[child] <- childValue
+                recurse ((parent, folder childValue parentValue, children) :: branchStack)
+
+            | (parent, value, child :: children) :: branchStack ->
+                match values.TryGetValue(child) with
+                | true, childValue ->
+                    recurse ((parent, folder childValue value, children) :: branchStack)
+                | _ ->
+                    match toTree child with
+                    | TreeBranch childBranches ->
+                        recurse ((child, identiy, childBranches) :: (parent, value, children) :: branchStack)
+                    | TreeLeaf leaf ->
+                        recurse ((parent, folder leaf value, children) :: branchStack)
+
+        fun (root) ->
+        match toTree root with
+        | TreeLeaf leaf -> leaf
+        | TreeBranch branches ->
+            recurse [(root, identiy, branches)]
 
 module Input =
     let trim (x:string) = x.Trim()

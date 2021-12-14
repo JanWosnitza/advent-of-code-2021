@@ -11,15 +11,17 @@ let parse = Input.toMultiline >> fun input ->
     |}
 
 let fishLife () =
-    let rec mem = Util.memoize ()
-    let rec recurse (daysLeft) =
-        if daysLeft <= 0 then
-            1I
+    let toTree (fish) =
+        if fish <= 0 then
+            TreeLeaf 1I
         else
-            mem recurse (daysLeft - 7) + mem recurse (daysLeft - 9)
+            TreeBranch [fish - 9; fish - 7]
+
+    let fold = Util.treeFold toTree (+) 0I
 
     fun (days) (fish) ->
-    mem recurse (days - fish)
+    (days - fish)
+    |> fold
 
 let part1 = parse >> fun input ->
     let fishLife = fishLife ()
