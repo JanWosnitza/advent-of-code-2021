@@ -44,24 +44,24 @@ module ElementCount =
         ||> Seq.fold (fun map (element, count) -> map |> add element count)
 
 let getCounts insertions =
-    let mem = Util.memoize ()
-
-    let rec recurse (steps, element1, element2) =
+    let toTree (steps, e1, e2) =
         if steps <= 0 then
             ElementCount.empty
-            |> ElementCount.add element2 1I
+            |> ElementCount.add e2 1I
+            |> TreeLeaf
         else
-            let insert = insertions |> Map.find (element1, element2)
-            
-            (mem recurse (steps - 1, element1, insert))
-            |> ElementCount.combine (mem recurse (steps - 1, insert, element2))
+            let insert = insertions |> Map.find (e1, e2)
+            TreeBranch [
+                (steps - 1, e1, insert)
+                (steps - 1, insert, e2)
+            ]
+
+    let fold = Util.treeFold toTree ElementCount.combine ElementCount.empty
 
     fun steps template ->
     template
     |> Seq.pairwise
-    |> Seq.map (fun (e1, e2) ->
-        mem recurse (steps, e1, e2)
-    )
+    |> Seq.map (fun (e1, e2) -> fold (steps, e1, e2))
     |> Seq.reduce ElementCount.combine
     |> ElementCount.add (Seq.head template) 1I
 
