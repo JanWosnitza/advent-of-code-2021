@@ -4,11 +4,11 @@ open Advent
 
 type Element = Element of char
 
-// all the input is reversed :)) makes up for some nice list working
 let parse = Input.toMultiline >> fun input ->
     {|
         Template =
-            input.[0]
+            input
+            |> Seq.head
             |> Seq.map Element
             |> Seq.toList
 
@@ -53,8 +53,7 @@ let getCounts insertions =
         else
             let insert = insertions |> Map.find (element1, element2)
             
-            ElementCount.empty
-            |> ElementCount.combine (mem recurse (steps - 1, element1, insert))
+            (mem recurse (steps - 1, element1, insert))
             |> ElementCount.combine (mem recurse (steps - 1, insert, element2))
 
     fun steps template ->
@@ -105,17 +104,11 @@ CC -> N
 CN -> C
 """
 
-(*let input = parse testInput1
-input.Template
-|> getCounts input.Insertions 0
-|> printfn "%A"
-*)
-
 AoC.Day 14 [
     AoC.Part part1 [
-        testInput1, 1588I
+        testInput1, 1_588I
     ]
     AoC.Part part2 [
-        testInput1, 2188189693529I
+        testInput1, 2_188_189_693_529I
     ]
 ]
