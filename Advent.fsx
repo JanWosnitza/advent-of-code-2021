@@ -19,33 +19,31 @@ module Util =
     let treeFold (toTree) (folder) (identiy) =
         let values = System.Collections.Generic.Dictionary<_,_>()
         
-        let rec recurse (branchStack) =
-            match branchStack with
-            | [] -> failwith ""
+        let rec recurse (parent) (value) (children) (branchStack) =
+            match parent, value, children with
+            | (child, childValue, []) ->
+                match branchStack with
+                | [] -> childValue
+                | struct (parent, parentValue, children) :: branchStack ->
+                    values[child] <- childValue
+                    recurse parent (folder childValue parentValue) children branchStack
 
-            | (parent, value, []) :: [] ->
-                value
-
-            | (child, childValue, []) :: (parent, parentValue, children) :: branchStack ->
-                values[child] <- childValue
-                recurse ((parent, folder childValue parentValue, children) :: branchStack)
-
-            | (parent, value, child :: children) :: branchStack ->
+            | (parent, value, child :: children) ->
                 match values.TryGetValue(child) with
                 | true, childValue ->
-                    recurse ((parent, folder childValue value, children) :: branchStack)
+                    recurse parent (folder childValue value) children branchStack
                 | _ ->
                     match toTree child with
                     | TreeBranch childBranches ->
-                        recurse ((child, identiy, childBranches) :: (parent, value, children) :: branchStack)
+                        recurse child identiy childBranches (struct (parent, value, children) :: branchStack)
                     | TreeLeaf leaf ->
-                        recurse ((parent, folder leaf value, children) :: branchStack)
+                        recurse parent (folder leaf value) children branchStack
 
         fun (root) ->
         match toTree root with
         | TreeLeaf leaf -> leaf
         | TreeBranch branches ->
-            recurse [(root, identiy, branches)]
+            recurse root identiy branches []
 
 module Input =
     let trim (x:string) = x.Trim()
