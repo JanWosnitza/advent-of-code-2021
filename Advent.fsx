@@ -120,7 +120,6 @@ module AoC =
             |> List.iteri (fun i (input, expected) ->
                 printf $"{context} Part{part} Test{i + 1}"
                 let time, result = measure f input
-                let result = f input
                 if result <> expected then
                     printfn $" {formatTime time} FAILURE"
                     printfn $"{result}"
