@@ -8,33 +8,6 @@ let binaryToInteger (binary:Bits) =
     (0I, binary)
     ||> List.fold (fun value -> function true -> value * 2I + 1I | false -> value * 2I)
 
-let parse = Input.trim >> fun input ->
-    {|
-        Bits =
-            input
-            |> Seq.collect (function
-                | '0' -> [false; false; false; false]
-                | '1' -> [false; false; false; true]
-                | '2' -> [false; false; true; false]
-                | '3' -> [false; false; true; true]
-                | '4' -> [false; true; false; false]
-                | '5' -> [false; true; false; true]
-                | '6' -> [false; true; true; false]
-                | '7' -> [false; true; true; true]
-                | '8' -> [true; false; false; false]
-                | '9' -> [true; false; false; true]
-                | 'A' -> [true; false; true; false]
-                | 'B' -> [true; false; true; true]
-                | 'C' -> [true; true; false; false]
-                | 'D' -> [true; true; false; true]
-                | 'E' -> [true; true; true; false]
-                | 'F' -> [true; true; true; true]
-                | c -> failwith $"Not a hexadezimal number '{c}'"
-            )
-            |> Seq.toList
-            : Bits
-    |}
-
 type OperatorType = Sum | Product | Minimum | Maximum | GreaterThan | LessThan | EqualTo 
 
 type PacketContent =
@@ -115,6 +88,34 @@ and readPacket (bits:Bits) : Packet * Bits =
     }
     packet, bits
 
+let parse = Input.trim >> fun input ->
+    {|
+        Packet =
+            input
+            |> Seq.collect (function
+                | '0' -> [false; false; false; false]
+                | '1' -> [false; false; false; true]
+                | '2' -> [false; false; true; false]
+                | '3' -> [false; false; true; true]
+                | '4' -> [false; true; false; false]
+                | '5' -> [false; true; false; true]
+                | '6' -> [false; true; true; false]
+                | '7' -> [false; true; true; true]
+                | '8' -> [true; false; false; false]
+                | '9' -> [true; false; false; true]
+                | 'A' -> [true; false; true; false]
+                | 'B' -> [true; false; true; true]
+                | 'C' -> [true; true; false; false]
+                | 'D' -> [true; true; false; true]
+                | 'E' -> [true; true; true; false]
+                | 'F' -> [true; true; true; true]
+                | c -> failwith $"Not a hexadezimal number '{c}'"
+            )
+            |> Seq.toList
+            |> readPacket
+            |> fst
+    |}
+
 let part1 = parse >> fun input ->
     let rec sumVersions (packet:Packet) =
         match packet.Content with
@@ -122,9 +123,7 @@ let part1 = parse >> fun input ->
         | Operator (operatorType, subPackets) ->
             packet.Version + Seq.sumBy sumVersions subPackets
 
-    input.Bits
-    |> readPacket
-    |> fst
+    input.Packet
     |> sumVersions
 
 let part2 = parse >> fun input ->
@@ -155,9 +154,7 @@ let part2 = parse >> fun input ->
             if calc subpacket1 = calc subpacket2 then 1I else 0I
         | _ -> failwith $"Invalid packet {packet}"
 
-    input.Bits
-    |> readPacket
-    |> fst
+    input.Packet
     |> calc
 
 //////////////////////////////
