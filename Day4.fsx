@@ -2,20 +2,15 @@
 #load "Advent.fsx"
 open Advent
 
-type DrawList = DrawList of int list
-
 type Board = Board of int[][]
 
 let parse = Input.toMultiline >> fun input ->
-    let rounds =
+    let drawnNumbers = 
         input
         |> Array.head
         |> Input.split [","]
         |> Seq.map int
         |> Seq.toList
-        |> List.rev
-        |> List.unfold (function [] -> None | drawList -> Some (DrawList drawList, List.tail drawList))
-        |> List.rev
 
     let boards =
         input
@@ -34,22 +29,29 @@ let parse = Input.toMultiline >> fun input ->
         )
         |> Seq.toList
 
-    let isWin (Board board) (DrawList drawList) =
-        let test (get) = [0 .. 4] |> List.exists (fun i -> [0 .. 4] |> List.forall (fun j -> drawList |> List.contains (get i j)))
-        test (fun i j -> board.[i].[j])
-        || test (fun i j -> board.[j].[i])
-
     {|
-        BoardsWithWinRound =
-            boards
-            |> List.map (fun board ->
-                let round = rounds |> List.findIndex (isWin board)
-                (round, (rounds.[round], board))
-            )
+        DrawnNumbers = drawnNumbers
+        Boards = boards
     |}
 
-let getScore (round) (Board board) =
-    let (DrawList drawList) = round
+type Round = Round of int list
+
+let toRounds (drawnNumbers:int list) =
+    drawnNumbers
+    |> List.rev
+    |> List.unfold (function [] -> None | round -> Some (Round round, List.tail round))
+    |> List.rev
+
+let isWin (Board board) (Round round) =
+    let test (get) = [0 .. 4] |> List.exists (fun i -> [0 .. 4] |> List.forall (fun j -> round |> List.contains (get i j)))
+    test (fun i j -> board.[i].[j])
+    || test (fun i j -> board.[j].[i])
+
+let getWinningRound (rounds) (board) =
+    let round = rounds |> List.findIndex (isWin board)
+    (round, (rounds[round], board))
+
+let getScore (Round drawList) (Board board) =
     let lastDrawnNumber = List.head drawList
 
     let sum =
@@ -59,15 +61,19 @@ let getScore (round) (Board board) =
         |> Seq.sum
 
     (lastDrawnNumber * sum)
-    
+
 let part1 = parse >> fun input ->
-    input.BoardsWithWinRound
+    let rounds = toRounds input.DrawnNumbers
+    input.Boards
+    |> List.map (getWinningRound rounds)
     |> List.minBy fst
     |> snd
     ||> getScore
 
 let part2 = parse >> fun input ->
-    input.BoardsWithWinRound
+    let rounds = toRounds input.DrawnNumbers
+    input.Boards
+    |> List.map (getWinningRound rounds)
     |> List.maxBy fst
     |> snd
     ||> getScore

@@ -56,12 +56,10 @@ let tryAstar (getNeighbours:'Node -> list<'Node>) (getDistance:'Distance -> 'Nod
     
     search closedSet openSet
 
-let getNeighbours (map) (x, y) =
+let getValidNeighbours (map) (x, y) =
     [
-        x - 1, y
-        x + 1, y
-        x, y - 1
-        x, y + 1
+        x - 1, y; x + 1, y
+        x, y - 1; x, y + 1
     ]
     |> List.filter (fun position -> map |> Map.containsKey position)
 
@@ -78,7 +76,7 @@ let part1 = parse >> fun input ->
     let target = sizeX - 1, sizeY - 1
 
     let (Risk sourceRisk) = map |> Map.find source
-    tryAstar (getNeighbours map) (estimateRisk map target) (source, Risk (-sourceRisk)) target
+    tryAstar (getValidNeighbours map) (estimateRisk map target) (source, Risk (-sourceRisk)) target
     |> Option.get
     |> fst
 
@@ -103,7 +101,7 @@ let part2 = parse >> fun input ->
     let source = 0, 0
     let target = sizeX * 5 - 1, sizeY * 5 - 1
     let (Risk sourceRisk) = map |> Map.find source
-    tryAstar (getNeighbours map) (estimateRisk map target) (source, Risk (-sourceRisk)) target
+    tryAstar (getValidNeighbours map) (estimateRisk map target) (source, Risk (-sourceRisk)) target
     |> Option.get
     |> fst
 

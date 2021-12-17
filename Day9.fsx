@@ -67,6 +67,7 @@ let part2 = parse >> fun input ->
     |> Seq.reduce (*)
 
 /////////////////////////
+
 let testInput1 =  """
 2199943210
 3987894921

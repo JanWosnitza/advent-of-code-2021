@@ -2,24 +2,27 @@
 #load "Advent.fsx"
 open Advent
 
+[<Struct>]
+type Fish = Fish of int
+
 let parse = Input.toMultiline >> fun input ->
     {|
         AllFish =
             input.[0]
             |> Input.split [","]
-            |> Array.map int
+            |> Array.map (int >> Fish)
     |}
 
 let fishLife () =
-    let toTree (fish) =
-        if fish <= 0 then
+    let toTree (days) =
+        if days <= 0 then
             TreeLeaf 1I
         else
-            TreeBranch [fish - 9; fish - 7]
+            TreeBranch [days - 9; days - 7]
 
     let fold = Util.treeFold toTree (+) 0I
 
-    fun (days) (fish) ->
+    fun (days) (Fish fish) ->
     (days - fish)
     |> fold
 
@@ -35,6 +38,7 @@ let part2 = parse >> fun input ->
     |> Seq.sumBy (fun (fish, count) -> fishLife 256 fish * bigint count)
 
 /////////////////////////////
+
 let testInput1 =  """
 3,4,3,1,2
 """
