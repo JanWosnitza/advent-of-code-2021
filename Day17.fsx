@@ -31,36 +31,43 @@ let getValues (updateVelocity) (sourcePosition) (sourceVelocity) =
     (sourcePosition, sourceVelocity)
     |> Seq.unfold (fun (pos, vel) ->
         let pos' = pos + vel
-        let vel' = updateVelocity vel
-        Some ((pos', vel'), (pos', vel'))
+        Some (pos', (pos', updateVelocity vel))
     )
 
 let part1 = parse >> fun input ->
     [0 .. 1000]
     |> Seq.map (getValues updateYVelocity input.Source.Y)
-    |> Seq.map (Seq.takeWhile (fun (pos, vel) -> input.Target.YMin <= pos))
-    |> Seq.filter (Seq.exists (fun (pos, vel) -> pos <= input.Target.YMax))
+    |> Seq.map (Seq.takeWhile (fun pos -> input.Target.YMin <= pos))
+    |> Seq.filter (Seq.exists (fun pos -> pos <= input.Target.YMax))
     |> Seq.last
-    |> Seq.map fst
     |> Seq.max
 
 let part2 = parse >> fun input ->
-    let xss =
+    let xss = // indices inside
         [0 .. 1000]
-        |> Seq.map (getValues updateXVelocity input.Source.X)
-        |> Seq.map (Seq.takeWhile (fun (pos, vel) -> pos <= input.Target.XMax))
-        |> Seq.map (Seq.map (fun (pos, vel) -> pos >= input.Target.XMin))
+        |> Seq.map (fun xVelocity ->
+            xVelocity
+            |> getValues updateXVelocity input.Source.X
+            |> Seq.takeWhile (fun pos -> pos <= input.Target.XMax)
+            |> Seq.cache
+        )
         |> Seq.toList
 
-    let yss =
+    let yss = // indices inside
         [-1000 .. 1000]
-        |> Seq.map (getValues updateYVelocity input.Source.Y)
-        |> Seq.map (Seq.takeWhile (fun (pos, vel) -> pos >= input.Target.YMin))
-        |> Seq.map (Seq.map (fun (pos, vel) -> pos <= input.Target.YMax))
+        |> Seq.map (fun yVelocity ->
+            yVelocity
+            |> getValues updateYVelocity input.Source.Y
+            |> Seq.takeWhile (fun pos -> pos >= input.Target.YMin)
+            |> Seq.cache
+        )
         |> Seq.toList
 
     Seq.allPairs xss yss
-    |> Seq.filter ((fun (xs, ys) -> Seq.zip xs ys |> Seq.exists (fun (x, y) -> x && y)))
+    |> Seq.filter (fun (xs, ys) ->
+        Seq.zip xs ys
+        |> Seq.exists (fun (x, y) -> x >= input.Target.XMin && y <= input.Target.YMax)
+    )
     |> Seq.length
 
 ///////////////////
