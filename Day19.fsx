@@ -151,11 +151,13 @@ module Beacons =
                 (target, combinables |> Seq.map snd)
                 ||> Seq.fold combine
 
-            combinables
-            |> List.map fst
-            |> List.rev
-            |> List.fold (fun sources idx -> sources |> List.removeAt idx) sources
-            |> loop target
+            let sources =
+                combinables
+                |> List.map fst
+                |> List.rev
+                |> List.fold (fun sources idx -> sources |> List.removeAt idx) sources
+            
+            loop target sources
 
         match beacons with
         | [] -> failwith ""
