@@ -96,9 +96,7 @@ module Beacons =
             let intersections = Set.intersect target.Positions source.Positions |> Set.count
             intersections, source
         )
-        |> Seq.filter (fun (i, _) -> i >= minIntersections)
-        |> Seq.sortBy fst
-        |> Seq.tryHead
+        |> Seq.tryFind (fun (i, _) -> i >= minIntersections)
         |> Option.map snd
 
     let rec tryMakeCombinable (minIntersections:int) (target:Beacons) (source:Beacons) =
