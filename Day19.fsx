@@ -9,15 +9,9 @@ type [<Struct>] Position =
 
 type [<Struct>] Beacons =
     {
-        //Scanners : list<Position>
+        Scanners : list<Position>
         Positions : Set<Position>
     }
-
-module Beacons =
-    let combine (a:Beacons) (b:Beacons) =
-        {
-            Positions = Set.union a.Positions b.Positions
-        }
 
 let rotations =
     let rotX (pos:Position) = {X = pos.X; Y = -pos.Z; Z = pos.Y}
@@ -41,6 +35,38 @@ let rotations =
     ]
     |> List.collect id
 
+module Beacons =
+    let combine (a:Beacons) (b:Beacons) =
+        {
+            Scanners = a.Scanners @ b.Scanners
+            Positions = Set.union a.Positions b.Positions
+        }
+
+    let map (mapper) (x:Beacons) =
+        {
+            Scanners = x.Scanners |> List.map mapper
+            Positions = x.Positions |> Set.map mapper
+        }
+
+    let rec tryMakeCombinableBF (target:Beacons) (source:Beacons) =
+        // extracting Feature Vectors per position and only mapping equal features should speed this up by a lot
+
+        rotations
+        |> Seq.map (fun rotation ->
+            source
+            |> map rotation
+        )
+        |> Seq.choose (fun (source) ->
+            Seq.allPairs target.Positions source.Positions
+            |> Seq.map (fun (p1, p2) ->
+                let pOff = p1 - p2
+                source
+                |> map (fun p -> p + pOff)
+            )
+            |> Seq.tryFind (fun source -> (Set.intersect target.Positions source.Positions |> Set.count) >= 12)
+        )
+        |> Seq.tryHead
+
 let rec readBeacons (positions) (rows) =
     match rows with
     | [] -> positions |> List.rev, []
@@ -60,8 +86,12 @@ let rec readScanners (scanners:list<Beacons>) (rows:list<string>) =
     | header :: rows
       when header = $"--- scanner {scanners.Length} ---" ->
         let positions, rows = rows |> readBeacons []
+        let beacons = {
+            Scanners = [{X=0; Y=0; Z=0}]
+            Positions = Set.ofSeq positions
+        }
         rows
-        |> readScanners ({Positions = Set.ofSeq positions} :: scanners)
+        |> readScanners (beacons :: scanners)
     | header :: rows ->
         failwith $"Invalid scanner {header}"
 
@@ -73,41 +103,15 @@ let parse = Input.toMultiline >> fun input ->
             |> readScanners []
     |}
 
-let rec tryMakeCombinable (target:Beacons) (source:Beacons) =
-    rotations
-    |> Seq.map (fun rotation ->
-        source.Positions
-        |> Set.toSeq
-        |> Seq.map rotation
-        |> Seq.toList
-    )
-    |> Seq.choose (fun (positions2) ->
-        Seq.allPairs target.Positions positions2
-        |> Seq.map (fun (p1, p2) ->
-            let pOff = p1 - p2
-            positions2
-            |> Seq.map (fun p -> p + pOff)
-            |> Set.ofSeq
-        )
-        |> Seq.tryFind (fun set2 -> (Set.intersect target.Positions set2 |> Set.count) >= 12)
-    )
-    |> Seq.tryHead
-    |> Option.map (fun sourcePositions ->
-        {
-            Positions = sourcePositions
-        }
-    )
-
 let combine (beacons:list<Beacons>) =
     let rec loop (target:Beacons) (sources:list<Beacons>) =
-        printf $" {sources.Length}"
         if sources |> List.isEmpty then target else
         
         let combinables =
             sources
             |> Seq.indexed
             |> Seq.choose (fun (idx, source) ->
-                tryMakeCombinable target source
+                Beacons.tryMakeCombinableBF target source
                 |> Option.map (fun source -> (idx, source))
             )
             |> Seq.toList
@@ -129,11 +133,25 @@ let combine (beacons:list<Beacons>) =
     | b :: bs -> loop b bs
 
 let part1 = parse >> fun input ->
+    printf " (this takes looong)"
     let beacons =
         input.Scanners
         |> combine
 
     beacons.Positions.Count
+
+let part2 = parse >> fun input ->
+    printf " (this takes looong)"
+    let beacons =
+        input.Scanners
+        |> combine
+
+    Seq.allPairs beacons.Scanners beacons.Scanners
+    |> Seq.map (fun (a, b) ->
+        let x = a - b
+        abs x.X + abs x.Y + abs x.Z
+    )
+    |> Seq.max
 
 ////////////////////////////
 
@@ -279,5 +297,8 @@ let testInput1 = """
 AoC.Day 19 [
     AoC.Part part1 [
         testInput1, 79
+    ]
+    AoC.Part part2 [
+        testInput1, 3621
     ]
 ]
