@@ -7,12 +7,6 @@ type [<Struct>] Position =
     static member (+) (a:Position, b:Position) = {X = a.X + b.X; Y = a.Y + b.Y; Z = a.Z + b.Z}
     static member (-) (a:Position, b:Position) = {X = a.X - b.X; Y = a.Y - b.Y; Z = a.Z - b.Z}
 
-type [<Struct>] Beacons =
-    {
-        Scanners : list<Position>
-        Positions : Set<Position>
-    }
-
 let rotations =
     let rotX (pos:Position) = {X = pos.X; Y = -pos.Z; Z = pos.Y}
     let rots (rot) =
@@ -35,6 +29,12 @@ let rotations =
     ]
     |> List.collect id
 
+type [<Struct>] Beacons =
+    {
+        Scanners : list<Position>
+        Positions : Set<Position>
+    }
+
 module Beacons =
     let combine (a:Beacons) (b:Beacons) =
         {
@@ -48,24 +48,118 @@ module Beacons =
             Positions = x.Positions |> Set.map mapper
         }
 
-    let rec tryMakeCombinableBF (target:Beacons) (source:Beacons) =
-        // extracting Feature Vectors per position and only mapping equal features should speed this up by a lot
+    type [<Struct>] FeatureVector = FeatureVector of (int)
 
-        rotations
-        |> Seq.map (fun rotation ->
-            source
-            |> map rotation
+    let getFeatureVectors (positions:Set<Position>) =
+        let positions = positions |> Array.ofSeq
+
+        let getAxisFeature (selector) (positions:seq<Position>) =
+            positions
+            |> Seq.map selector
+            |> Seq.indexed
+            |> Seq.sortBy snd
+            |> Seq.pairwise
+            |> Seq.collect (fun ((idxA, posA), (idxB, posB)) -> [
+                idxA, posA - posB
+                idxB, posB - posA
+            ])
+            |> Seq.groupBy fst
+            |> Seq.map (fun (idx, distances) -> (idx, distances |> Seq.map snd |> Seq.minBy abs)
+            )
+            |> Map.ofSeq
+
+        let fxs = positions |> getAxisFeature (fun p -> p.X)
+        let fys = positions |> getAxisFeature (fun p -> p.Y)
+        let fzs = positions |> getAxisFeature (fun p -> p.Z)
+        
+        seq {0 .. positions.Length - 1}
+        |> Seq.map (fun i ->
+            let fx = fxs |> Map.find i
+            let fy = fys |> Map.find i
+            let fz = fzs |> Map.find i
+            (
+                FeatureVector (fx |> max fy |> max fz),
+                positions[i]
+            )
         )
-        |> Seq.choose (fun (source) ->
-            Seq.allPairs target.Positions source.Positions
-            |> Seq.map (fun (p1, p2) ->
-                let pOff = p1 - p2
+        |> Seq.groupBy fst
+        |> Seq.map (fun (feature, idxs) -> (feature, idxs |> Seq.map snd |> Seq.toList))
+        |> Map.ofSeq
+
+    let private tryGetCombinable_Shift (minIntersections:int) (target:Beacons, positionsTarget) (source:Beacons, positionsSource) =
+        Seq.allPairs positionsTarget positionsSource
+        |> Seq.map (fun (posTarget, posSource) ->
+            let pOff = posTarget - posSource
+            let source =
                 source
                 |> map (fun p -> p + pOff)
+            let intersections = Set.intersect target.Positions source.Positions |> Set.count
+            intersections, source
+        )
+        |> Seq.filter (fun (i, _) -> i >= minIntersections)
+        |> Seq.sortBy fst
+        |> Seq.tryHead
+        |> Option.map snd
+
+    let rec tryMakeCombinable (minIntersections:int) (target:Beacons) (source:Beacons) =
+        let fvsTarget = getFeatureVectors target.Positions
+
+        rotations
+        |> Seq.map (fun rotation -> source |> map rotation)
+        |> Seq.choose (fun (source) ->
+            getFeatureVectors source.Positions
+            |> Map.toSeq
+            |> Seq.choose (fun (fvSource, positionsSource) ->
+                match fvsTarget |> Map.tryFind fvSource with
+                | None -> None
+                | Some positionsTarget -> tryGetCombinable_Shift minIntersections (target, positionsTarget) (source, positionsSource)
             )
-            |> Seq.tryFind (fun source -> (Set.intersect target.Positions source.Positions |> Set.count) >= 12)
+            |> Seq.tryHead
         )
         |> Seq.tryHead
+
+    let rec tryMakeCombinableBF (minIntersections:int) (target:Beacons) (source:Beacons) =
+        rotations
+        |> Seq.map (fun rotation -> source |> map rotation)
+        |> Seq.choose (fun (source) ->
+            tryGetCombinable_Shift minIntersections (target, target.Positions) (source, source.Positions)
+        )
+        |> Seq.tryHead
+
+    let combines (minIntersections:int) (beacons:list<Beacons>) =
+        let rec loop (target:Beacons) (sources:list<Beacons>) =
+            if sources |> List.isEmpty then target else
+
+            let makeCombinalbes (algorithm) =
+                sources
+                |> Seq.indexed
+                |> Seq.choose (fun (idx, source) ->
+                    algorithm minIntersections target source
+                    |> Option.map (fun source -> (idx, source))
+                )
+                |> Seq.toList
+
+            let combinables = makeCombinalbes tryMakeCombinable
+
+            let combinables =
+                if not <| combinables.IsEmpty then
+                    combinables
+                else
+                    makeCombinalbes tryMakeCombinableBF
+
+            let target =
+                (target, combinables |> Seq.map snd)
+                ||> Seq.fold combine
+
+            combinables
+            |> List.map fst
+            |> List.rev
+            |> List.fold (fun sources idx -> sources |> List.removeAt idx) sources
+            |> loop target
+
+        match beacons with
+        | [] -> failwith ""
+        | b :: bs -> loop b bs
 
 let rec readBeacons (positions) (rows) =
     match rows with
@@ -103,48 +197,17 @@ let parse = Input.toMultiline >> fun input ->
             |> readScanners []
     |}
 
-let combine (beacons:list<Beacons>) =
-    let rec loop (target:Beacons) (sources:list<Beacons>) =
-        if sources |> List.isEmpty then target else
-        
-        let combinables =
-            sources
-            |> Seq.indexed
-            |> Seq.choose (fun (idx, source) ->
-                Beacons.tryMakeCombinableBF target source
-                |> Option.map (fun source -> (idx, source))
-            )
-            |> Seq.toList
-
-        if combinables.IsEmpty then failwith "FAIL!" else
-
-        let target =
-            (target, combinables |> Seq.map snd)
-            ||> Seq.fold Beacons.combine
-
-        combinables
-        |> List.map fst
-        |> List.rev
-        |> List.fold (fun sources idx -> sources |> List.removeAt idx) sources
-        |> loop target
-
-    match beacons with
-    | [] -> failwith ""
-    | b :: bs -> loop b bs
-
 let part1 = parse >> fun input ->
-    printf " (this takes looong)"
     let beacons =
         input.Scanners
-        |> combine
+        |> Beacons.combines 12
 
     beacons.Positions.Count
 
 let part2 = parse >> fun input ->
-    printf " (this takes looong)"
     let beacons =
         input.Scanners
-        |> combine
+        |> Beacons.combines 12
 
     Seq.allPairs beacons.Scanners beacons.Scanners
     |> Seq.map (fun (a, b) ->
