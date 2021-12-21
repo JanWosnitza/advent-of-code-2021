@@ -54,7 +54,7 @@ module ImageEx =
             let y = getPixels image |> Map.toSeq |> Seq.map (fst >> snd)
             Seq.min y, Seq.max y
 
-        (xMin, yMin), (xMax, yMax)
+        (xMin, xMax), (yMin, yMax)
 
     let getAt (position) (image) =
         getPixels image
@@ -62,7 +62,7 @@ module ImageEx =
         |> Option.defaultValue image.OutsidePixels
 
     let enhance (enhancement:Enhancement) (image:ImageEx) =
-        let (xMin, yMin), (xMax, yMax) = getBounds image
+        let (xMin, xMax), (yMin, yMax) = getBounds image
 
         let pixels =
             seq {
@@ -70,9 +70,9 @@ module ImageEx =
                 for y = yMin - 1 to yMax + 1 do
                 let enhanceIdx =
                     [
-                        (-1, -1); ( 0, -1); ( 1, -1)
-                        (-1,  0); ( 0,  0); ( 1,  0)
-                        (-1,  1); ( 0,  1); ( 1,  1)
+                        for y = -1 to 1 do
+                        for x = -1 to 1 do
+                        yield (x, y)
                     ]
                     |> Seq.map (fun (dx, dy) -> image |> getAt (x + dx, y + dy))
                     |> binaryToInteger

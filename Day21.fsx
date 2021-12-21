@@ -15,7 +15,7 @@ let parse = Input.toMultiline >> fun input ->
     |}
 
 type PlayerName = Player1 | Player2
-type Player = {Name : PlayerName; Score : int; Position : int}
+type Player<'Name> = {Name : 'Name; Score : int; Position : int}
 
 module Player =
     let create (name) (startingPosition) = {Name = name; Score = 0; Position = startingPosition}
@@ -34,7 +34,7 @@ module Part1 =
         let roll (die:Die) = die.Next, {Next = (die.Next % 100) + 1; Rolls = die.Rolls + 1}
 
     module Player =
-        let turn (die) (player:Player) : Die * Player =
+        let turn (die) (player:Player<_>) : Die * Player<_> =
             let roll1, die = Die.roll die
             let roll2, die = Die.roll die
             let roll3, die = Die.roll die
@@ -71,7 +71,7 @@ module Part2 =
         let player1 = Player.create Player1 input.Player1
         let player2 = Player.create Player2 input.Player2
         
-        let toTree (winningScore) (current:Player, next) =
+        let toTree (winningScore) (current:Player<_>, next) =
             if next.Score >= winningScore then
                 match next.Name with
                 | Player1 -> TreeLeaf (1I, 0I)
