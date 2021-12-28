@@ -1,4 +1,4 @@
-// https://adventofcode.com/2f2t/day/17
+// https://adventofcode.com/2021/day/17
 #load "Advent.fsx"
 #r "nuget: FSharp.Text.RegexProvider"
 open Advent

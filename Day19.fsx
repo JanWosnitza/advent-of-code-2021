@@ -1,4 +1,4 @@
-// https://adventofcode.com/2f2t/day/19
+// https://adventofcode.com/2021/day/19
 #load "Advent.fsx"
 open Advent
 
